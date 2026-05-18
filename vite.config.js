@@ -1,5 +1,5 @@
 import { defineConfig } from 'vite'
 
 export default defineConfig({
-  base: '/EmilysFlowerShop/',
+  base: '/emilys-flower-shop/',
 })
