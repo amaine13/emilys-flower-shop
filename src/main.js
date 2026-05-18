@@ -16,8 +16,8 @@ const config = {
   backgroundColor: GAME.BG_COLOR,
   parent: 'game-container',
   scale: {
-    mode: Phaser.Scale.WIDTH_CONTROLS_HEIGHT,
-    autoCenter: Phaser.Scale.NO_CENTER,
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
     width: GAME.WIDTH,
     height: GAME.HEIGHT,
   },
