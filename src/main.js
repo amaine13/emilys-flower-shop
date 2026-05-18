@@ -9,12 +9,16 @@ import UpgradeScene from './scenes/UpgradeScene.js'
 import OrderScene from './scenes/OrderScene.js'
 import TutorialScene from './scenes/TutorialScene.js'
 
+const MAX_WIDTH = 480
+
 const config = {
   type: Phaser.AUTO,
   backgroundColor: GAME.BG_COLOR,
   parent: 'game-container',
   scale: {
     mode: Phaser.Scale.RESIZE,
+    width: Math.min(window.innerWidth, MAX_WIDTH),
+    height: window.innerHeight,
   },
   input: {
     activePointers: 3,
@@ -31,4 +35,8 @@ const config = {
   ],
 }
 
-new Phaser.Game(config)
+const game = new Phaser.Game(config)
+
+window.addEventListener('resize', () => {
+  game.scale.resize(Math.min(window.innerWidth, MAX_WIDTH), window.innerHeight)
+})
