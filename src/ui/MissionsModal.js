@@ -82,7 +82,7 @@ export default class MissionsModal {
     const title = this.scene.add
       .text(cx, panelTop + 28, "🎯 Emily's Goals", {
         fontFamily: 'Georgia',
-        fontSize: '20px',
+        fontSize: '22px',
         color: COLOR.brown,
       })
       .setOrigin(0.5)
@@ -106,7 +106,7 @@ export default class MissionsModal {
     const closeLabel = this.scene.add
       .text(panelLeft + PANEL_W - 22, panelTop + 22, '✕', {
         fontFamily: 'Georgia',
-        fontSize: '18px',
+        fontSize: '20px',
         color: COLOR.brown,
       })
       .setOrigin(0.5)
@@ -138,7 +138,7 @@ export default class MissionsModal {
     const summary = this.scene.add
       .text(cx, blockTop, line, {
         fontFamily: 'Georgia',
-        fontSize: '12px',
+        fontSize: '14px',
         color: COLOR.brown,
         align: 'center',
         wordWrap: { width: PANEL_W - 28 },
@@ -179,7 +179,7 @@ export default class MissionsModal {
       const label = this.scene.add
         .text(tx, ty, tab.label, {
           fontFamily: 'Georgia',
-          fontSize: '15px',
+          fontSize: '17px',
           color: active ? COLOR.pinkHex : COLOR.muted,
           fontStyle: active ? 'bold' : 'normal',
         })
@@ -379,7 +379,7 @@ export default class MissionsModal {
     const desc = this.scene.add
       .text(textX, localY + ROW_PAD_V, def.description, {
         fontFamily: 'Georgia',
-        fontSize: '13px',
+        fontSize: '15px',
         color: COLOR.brown,
         wordWrap: { width: 190 },
       })
@@ -400,7 +400,7 @@ export default class MissionsModal {
       container.add(icon)
     } else {
       const icon = this.scene.add
-        .text(iconX, rowMidY, def.icon, { fontSize: '20px' })
+        .text(iconX, rowMidY, def.icon, { fontSize: '22px' })
         .setOrigin(0.5)
       container.add(icon)
     }
@@ -426,7 +426,7 @@ export default class MissionsModal {
         `${Math.min(rowState.progress, def.target)}/${def.target}`,
         {
           fontFamily: 'Georgia',
-          fontSize: '11px',
+          fontSize: '13px',
           color: COLOR.muted,
         },
       )
@@ -439,7 +439,7 @@ export default class MissionsModal {
       const claimed = this.scene.add
         .text(PANEL_W - 18, rowMidY, '✓ Claimed', {
           fontFamily: 'Georgia',
-          fontSize: '13px',
+          fontSize: '15px',
           color: COLOR.success,
         })
         .setOrigin(1, 0.5)
@@ -467,7 +467,7 @@ export default class MissionsModal {
     const label = this.scene.add
       .text(btnCx, btnCy, 'Claim 🎁', {
         fontFamily: 'Georgia',
-        fontSize: '13px',
+        fontSize: '15px',
         color: '#ffffff',
       })
       .setOrigin(0.5)
@@ -550,7 +550,7 @@ export function attachGoalsButton(scene, save) {
   const label = scene.add
     .text(cx, cy, '🎯 Goals', {
       fontFamily: 'Georgia',
-      fontSize: '12px',
+      fontSize: '14px',
       color: '#ffffff',
     })
     .setOrigin(0.5, 0.5)
@@ -562,7 +562,7 @@ export function attachGoalsButton(scene, save) {
   const badgeText = scene.add
     .text(badgeCx, badgeCy, '!', {
       fontFamily: 'Georgia',
-      fontSize: '10px',
+      fontSize: '12px',
       color: '#ffffff',
       fontStyle: 'bold',
     })

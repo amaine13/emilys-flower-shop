@@ -14,6 +14,7 @@ const MAX_WIDTH = 480
 const config = {
   type: Phaser.AUTO,
   backgroundColor: GAME.BG_COLOR,
+  resolution: window.devicePixelRatio || 2,
   parent: 'game-container',
   scale: {
     mode: Phaser.Scale.RESIZE,

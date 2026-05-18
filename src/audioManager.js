@@ -75,7 +75,7 @@ export function attachMuteButton(scene, save, saveManager, hudCy) {
   const label = scene.add
     .text(12, hudCy, isMuted() ? '🔇' : '🔊', {
       fontFamily: 'Georgia',
-      fontSize: '16px',
+      fontSize: '18px',
       color: '#ffffff',
     })
     .setOrigin(0, 0.5)

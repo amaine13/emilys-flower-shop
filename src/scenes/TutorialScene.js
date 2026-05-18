@@ -136,7 +136,7 @@ export default class TutorialScene extends Phaser.Scene {
     if (emoji) {
       lines.push(
         this.add
-          .text(0, 0, emoji, { fontSize: '32px', align: 'center' })
+          .text(0, 0, emoji, { fontSize: '34px', align: 'center' })
           .setOrigin(0.5, 0),
       )
     }
@@ -145,7 +145,7 @@ export default class TutorialScene extends Phaser.Scene {
         this.add
           .text(0, 0, title, {
             fontFamily: 'Georgia',
-            fontSize: '22px',
+            fontSize: '24px',
             color: COLOR.brown,
             align: 'center',
             wordWrap: { width: wrap },
@@ -158,7 +158,7 @@ export default class TutorialScene extends Phaser.Scene {
         this.add
           .text(0, 0, body, {
             fontFamily: 'Georgia',
-            fontSize: '15px',
+            fontSize: '17px',
             color: COLOR.brown,
             align: 'center',
             wordWrap: { width: wrap },
@@ -172,7 +172,7 @@ export default class TutorialScene extends Phaser.Scene {
           .text(0, 0, bodyItalic, {
             fontFamily: 'Georgia',
             fontStyle: 'italic',
-            fontSize: '14px',
+            fontSize: '16px',
             color: COLOR.muted,
             align: 'center',
             wordWrap: { width: wrap },
@@ -186,7 +186,7 @@ export default class TutorialScene extends Phaser.Scene {
           .text(0, 0, hint, {
             fontFamily: 'Georgia',
             fontStyle: 'italic',
-            fontSize: '12px',
+            fontSize: '14px',
             color: COLOR.muted,
             align: 'center',
           })
@@ -246,13 +246,13 @@ export default class TutorialScene extends Phaser.Scene {
       const cx = i * tabW + tabW / 2
       const cy = NAV_TOP + NAV_H / 2
       this.add
-        .text(cx, cy - 12, tab.emoji, { fontSize: '22px' })
+        .text(cx, cy - 12, tab.emoji, { fontSize: '24px' })
         .setOrigin(0.5)
         .setDepth(1)
       this.add
         .text(cx, cy + 14, tab.label, {
           fontFamily: 'Georgia',
-          fontSize: '12px',
+          fontSize: '14px',
           color: COLOR.inactiveTab,
         })
         .setOrigin(0.5)
@@ -286,13 +286,13 @@ export default class TutorialScene extends Phaser.Scene {
     const activeCx = activeIdx * tabW + tabW / 2
     const activeCy = NAV_TOP + NAV_H / 2
     this.add
-      .text(activeCx, activeCy - 12, TABS[activeIdx].emoji, { fontSize: '22px' })
+      .text(activeCx, activeCy - 12, TABS[activeIdx].emoji, { fontSize: '24px' })
       .setOrigin(0.5)
       .setDepth(3)
     this.add
       .text(activeCx, activeCy + 14, TABS[activeIdx].label, {
         fontFamily: 'Georgia',
-        fontSize: '12px',
+        fontSize: '14px',
         color: '#ffffff',
       })
       .setOrigin(0.5)
@@ -319,7 +319,7 @@ export default class TutorialScene extends Phaser.Scene {
     const arrow = this.add
       .text(x, startY, '↓', {
         fontFamily: 'Georgia',
-        fontSize: '28px',
+        fontSize: '30px',
         color: COLOR.arrow,
       })
       .setOrigin(0.5)
@@ -459,14 +459,14 @@ export default class TutorialScene extends Phaser.Scene {
     tulip.setScale(0.8)
 
     this.add
-      .text(cx, cardTop + 50, '☀️', { fontSize: '48px' })
+      .text(cx, cardTop + 50, '☀️', { fontSize: '50px' })
       .setOrigin(0.5)
       .setDepth(3)
 
     this.add
       .text(cx, cardTop + 120, DIALOGUE.endDay1, {
         fontFamily: 'Georgia',
-        fontSize: '24px',
+        fontSize: '26px',
         color: COLOR.brown,
         align: 'center',
         wordWrap: { width: cardW - 50 },
@@ -477,7 +477,7 @@ export default class TutorialScene extends Phaser.Scene {
     this.add
       .text(cx, cardTop + 180, DIALOGUE.endDay2, {
         fontFamily: 'Georgia',
-        fontSize: '15px',
+        fontSize: '17px',
         color: COLOR.brown,
         align: 'center',
         wordWrap: { width: cardW - 50 },
@@ -489,7 +489,7 @@ export default class TutorialScene extends Phaser.Scene {
       .text(cx, cardTop + 300, DIALOGUE.endDay3, {
         fontFamily: 'Georgia',
         fontStyle: 'italic',
-        fontSize: '14px',
+        fontSize: '16px',
         color: COLOR.muted,
         align: 'center',
         wordWrap: { width: cardW - 50 },
@@ -501,7 +501,7 @@ export default class TutorialScene extends Phaser.Scene {
       .text(cx, cardTop + 370, DIALOGUE.endDaySign, {
         fontFamily: 'Georgia',
         fontStyle: 'italic',
-        fontSize: '16px',
+        fontSize: '18px',
         color: COLOR.pink,
       })
       .setOrigin(0.5, 0)
@@ -516,7 +516,7 @@ export default class TutorialScene extends Phaser.Scene {
     this.add
       .text(cx, btnCy, 'Begin your adventure! 🌸', {
         fontFamily: 'Georgia',
-        fontSize: '18px',
+        fontSize: '20px',
         color: '#ffffff',
       })
       .setOrigin(0.5)

@@ -3,7 +3,8 @@
     "allow": [
       "Bash(npm run *)",
       "Bash(find \"G:\\\\\\\\Cursor Game\\\\\\\\emilys-flower-shop-v2\" -type f -name \"*.js\" -o -type f -name \"*.json\")",
-      "Bash(find *)"
+      "Bash(find *)",
+      "Bash(node -e ' *)"
     ]
   }
 }

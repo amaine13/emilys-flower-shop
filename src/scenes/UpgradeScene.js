@@ -1,7 +1,7 @@
 import Phaser from 'phaser'
 import { FLOWERS } from '../data/flowers.js'
 import { CONSUMABLES } from '../data/consumables.js'
-import { GAME, PROGRESSION } from '../constants.js'
+import { PROGRESSION } from '../constants.js'
 import * as saveManager from '../saveManager.js'
 import { track } from '../missionManager.js'
 import { attachGoalsButton } from '../ui/MissionsModal.js'
@@ -17,8 +17,8 @@ const MAX_PLOTS = 12
 const PLOT_BUY_AMOUNT = 2
 const PLOT_BUY_COST = 150
 
-const CARD_X = 25
 const CARD_W = 340
+const CARD_SIDE_MARGIN = 16
 /** Title pill top (clears HUD with ~20px gap). */
 const TITLE_PILL_TOP = HUD_H + 20
 const TITLE_PILL_W = 200
@@ -31,7 +31,9 @@ const CARD_PAD_Y = 16
 
 const SEED_ROW_H = 75
 const SEED_VISIBLE_ROWS = 4
-const TOOL_ROW_H = 96
+const TOOL_ROW_MIN_H = 96
+const TOOL_BTN_W = 118
+const TOOL_BTN_H = 34
 const SEED_DIVIDER_COLOR = 0xe0c8b0
 
 const COLOR = {
@@ -54,7 +56,7 @@ const COLOR = {
 function hudRow1TextStyle() {
   return {
     fontFamily: 'Georgia',
-    fontSize: '15px',
+    fontSize: '17px',
     color: '#ffffff',
     shadow: {
       offsetX: 1,
@@ -69,7 +71,7 @@ function hudRow1TextStyle() {
 function hudRow2TextStyle() {
   return {
     fontFamily: 'Georgia',
-    fontSize: '14px',
+    fontSize: '16px',
     color: '#ffffff',
     shadow: {
       offsetX: 1,
@@ -95,6 +97,14 @@ function fitImage(img, w, h) {
 
 function cardTextWrapWidth(cardW) {
   return cardW - CARD_PAD_X * 2
+}
+
+/** Horizontally center upgrade cards within the current game width. */
+function getUpgradeCardLayout(scene) {
+  const cardW = Math.min(CARD_W, scene.scale.width - CARD_SIDE_MARGIN * 2)
+  const cardX = (scene.scale.width - cardW) / 2
+  const cx = scene.scale.width / 2
+  return { cardX, cardW, cx }
 }
 
 /** Centered body copy within card horizontal padding. */
@@ -389,10 +399,10 @@ export default class UpgradeScene extends Phaser.Scene {
 
     const totalH = y + GAP_LAST_TO_NAV
 
-    const scrollCatch = this.add.rectangle(0, 0, GAME.WIDTH, totalH, 0x000000, 0.001)
+    const scrollCatch = this.add.rectangle(0, 0, this.scale.width, totalH, 0x000000, 0.001)
     scrollCatch.setOrigin(0, 0)
     scrollCatch.setInteractive(
-      new Phaser.Geom.Rectangle(0, 0, GAME.WIDTH, totalH),
+      new Phaser.Geom.Rectangle(0, 0, this.scale.width, totalH),
       Phaser.Geom.Rectangle.Contains,
     )
     this.upgradeScrollContainer.addAt(scrollCatch, 0)
@@ -413,7 +423,7 @@ export default class UpgradeScene extends Phaser.Scene {
     const title = this.add
       .text(cx, top + TITLE_PILL_H / 2, 'Upgrades', {
         fontFamily: 'Georgia',
-        fontSize: '22px',
+        fontSize: '24px',
         color: COLOR.brown,
       })
       .setOrigin(0.5)
@@ -421,14 +431,12 @@ export default class UpgradeScene extends Phaser.Scene {
   }
 
   buildPlotsCardAt(cardTop) {
-    const cardX = CARD_X
-    const cardW = CARD_W
-    const cx = cardX + cardW / 2
+    const { cardX, cardW, cx } = getUpgradeCardLayout(this)
     const pad = CARD_PAD_Y
     let innerY = cardTop + pad
 
     const title = addCardTitleRow(this, cx, innerY, '🌱', 'Garden Plots', {
-      fontSize: '18px',
+      fontSize: '20px',
       color: COLOR.brown,
     })
     innerY += 28
@@ -439,7 +447,7 @@ export default class UpgradeScene extends Phaser.Scene {
       innerY,
       `You have ${this.save.unlockedPlots} plots (max ${MAX_PLOTS})`,
       cardW,
-      { fontSize: '14px', color: COLOR.muted },
+      { fontSize: '16px', color: COLOR.muted },
     )
     innerY += 28
 
@@ -450,7 +458,7 @@ export default class UpgradeScene extends Phaser.Scene {
         innerY,
         'Garden is fully expanded!',
         '✿',
-        { fontSize: '15px', color: '#c96b9a' },
+        { fontSize: '17px', color: '#c96b9a' },
       )
       innerY += 28
       innerY += pad
@@ -480,21 +488,19 @@ export default class UpgradeScene extends Phaser.Scene {
       label: canAfford
         ? `Buy ${PLOT_BUY_AMOUNT} more plots — 🪙 ${PLOT_BUY_COST}`
         : `Buy ${PLOT_BUY_AMOUNT} more plots — 🪙 ${PLOT_BUY_COST} (Need ${PLOT_BUY_COST} 🪙)`,
-      fontSize: canAfford ? '16px' : '12px',
+      fontSize: canAfford ? '18px' : '14px',
       onTap: () => this.buyPlots(),
     })
     return cardH
   }
 
   buildSeedShopCardAt(cardTop) {
-    const cardX = CARD_X
-    const cardW = CARD_W
-    const cx = cardX + cardW / 2
+    const { cardX, cardW, cx } = getUpgradeCardLayout(this)
     const pad = CARD_PAD_Y
     let innerY = cardTop + pad
 
     const title = addCardTitleRow(this, cx, innerY, '🌸', 'Seed Shop', {
-      fontSize: '18px',
+      fontSize: '20px',
       color: COLOR.brown,
     })
     innerY += 30
@@ -515,7 +521,7 @@ export default class UpgradeScene extends Phaser.Scene {
         innerY + 8,
         "You've unlocked all flowers!",
         '✿',
-        { fontSize: '15px', color: COLOR.muted },
+        { fontSize: '17px', color: COLOR.muted },
       )
       innerY += 8 + done[0].height
       innerY += pad
@@ -544,7 +550,7 @@ export default class UpgradeScene extends Phaser.Scene {
         messageY,
         `Next seeds unlock at Level ${nextLevel}`,
         cardW,
-        { fontStyle: 'italic', fontSize: '13px', color: COLOR.muted },
+        { fontStyle: 'italic', fontSize: '15px', color: COLOR.muted },
       )
       headerExtras.push(lockedMessage)
       innerY = messageY + 22
@@ -600,7 +606,7 @@ export default class UpgradeScene extends Phaser.Scene {
     const name = this.add
       .text(cardX + 68, nameY, flower.name, {
         fontFamily: 'Georgia',
-        fontSize: '15px',
+        fontSize: '17px',
         color: COLOR.brown,
       })
       .setOrigin(0, 0.5)
@@ -615,7 +621,7 @@ export default class UpgradeScene extends Phaser.Scene {
     const badgeText = this.add
       .text(badgeLeftX + badgeW / 2, badgeY, `Tier ${flower.tier}`, {
         fontFamily: 'Georgia',
-        fontSize: '11px',
+        fontSize: '13px',
         color: COLOR.brown,
       })
       .setOrigin(0.5)
@@ -627,7 +633,7 @@ export default class UpgradeScene extends Phaser.Scene {
         .text(cardX + cardW - 16, rowCenterY, `Reach Level ${flower.unlockLevel}`, {
           fontFamily: 'Georgia',
           fontStyle: 'italic',
-          fontSize: '12px',
+          fontSize: '14px',
           color: COLOR.mutedButtonText,
         })
         .setOrigin(1, 0.5)
@@ -645,105 +651,106 @@ export default class UpgradeScene extends Phaser.Scene {
       hitH: 58,
       color: canAfford ? COLOR.pink : COLOR.mutedButton,
       label: `Unlock — 🪙 ${cost}`,
-      fontSize: '12px',
+      fontSize: '14px',
       onTap: () => this.buySeed(flower),
     })
   }
 
   buildToolsCardAt(cardTop) {
-    const cardX = CARD_X
-    const cardW = CARD_W
-    const cx = this.scale.width / 2
+    const { cardX, cardW, cx } = getUpgradeCardLayout(this)
     const pad = CARD_PAD_Y
     let innerY = cardTop + pad
 
     const title = this.add
       .text(cx, innerY, "🧰 Emily's Tools", {
         fontFamily: 'Georgia',
-        fontSize: '18px',
+        fontSize: '20px',
         color: COLOR.brown,
       })
       .setOrigin(0.5, 0)
     innerY += 28
 
     const listTop = innerY
-    const innerEnd = listTop + CONSUMABLES.length * TOOL_ROW_H + pad
-    const cardH = innerEnd - cardTop
-    const cardG = this.drawCard(cardX, cardTop, cardW, cardH)
-
-    this.addScroll(title)
-
+    let rowY = listTop
     CONSUMABLES.forEach((item, index) => {
-      const rowTop = listTop + index * TOOL_ROW_H
-      const rowCenterY = rowTop + TOOL_ROW_H / 2
       if (index > 0) {
         const divider = this.add.rectangle(
           cardX + cardW / 2,
-          rowTop,
+          rowY,
           cardW - 32,
           1,
           SEED_DIVIDER_COLOR,
         )
         this.addScroll(divider)
       }
-      this.buildConsumableRow(cardX, cardW, rowTop, rowCenterY, item)
+      rowY += this.buildConsumableRow(cardX, cardW, rowY, item)
     })
+    const cardH = rowY + pad - cardTop
+    const cardG = this.drawCard(cardX, cardTop, cardW, cardH)
+
+    this.addScroll(title)
 
     this.upgradeScrollContainer.sendToBack(cardG)
     return cardH
   }
 
-  buildConsumableRow(cardX, cardW, rowTop, rowCenterY, item) {
+  buildConsumableRow(cardX, cardW, rowTop, item) {
+    const padLeft = 16
+    const btnRightPad = 12
+    const btnX = cardX + cardW - TOOL_BTN_W / 2 - btnRightPad
+    const textColW = cardW - padLeft - TOOL_BTN_W - btnRightPad - 8
+
+    const nameY = rowTop + 12
+    const descY = rowTop + 34
+
     const iconName = this.add
-      .text(cardX + 16, rowTop + 12, `${item.icon} ${item.name}`, {
+      .text(cardX + padLeft, nameY, `${item.icon} ${item.name}`, {
         fontFamily: 'Georgia',
-        fontSize: '15px',
+        fontSize: '17px',
         color: COLOR.brown,
       })
       .setOrigin(0, 0)
     const description = this.add
-      .text(cardX + 16, rowTop + 34, item.description, {
+      .text(cardX + padLeft, descY, item.description, {
         fontFamily: 'Georgia',
         fontStyle: 'italic',
-        fontSize: '11px',
+        fontSize: '13px',
         color: COLOR.muted,
+        wordWrap: { width: textColW },
       })
       .setOrigin(0, 0)
 
     const stockCount = this.save.consumables[item.id] || 0
+    const stockY = descY + description.height + 8
     const stockLabel = this.add
-      .text(cardX + 16, rowTop + 62, `In stock: ${stockCount} uses`, {
+      .text(cardX + padLeft, stockY, `In stock: ${stockCount} uses`, {
         fontFamily: 'Georgia',
-        fontSize: '11px',
+        fontSize: '13px',
         color: '#8a7a6a',
       })
       .setOrigin(0, 0)
 
     const canAfford = this.save.coins >= item.price
-    const btnW = 118
-    const btnH = 34
-    const btnX = cardX + cardW - btnW / 2 - 12
-
+    const btnCenterY = nameY + TOOL_BTN_H / 2
     const perPurchaseText = this.add
-      .text(btnX, rowTop + 62, `+${item.packSize} per purchase`, {
+      .text(btnX, stockY, `+${item.packSize} per purchase`, {
         fontFamily: 'Georgia',
         fontStyle: 'italic',
-        fontSize: '11px',
+        fontSize: '13px',
         color: '#8a7a6a',
       })
       .setOrigin(0.5, 0)
-    const btnCenterY = rowTop + 12 + btnH / 2
     const btn = createRoundedFillCentered(
       this,
       btnX,
       btnCenterY,
-      btnW,
-      btnH,
+      TOOL_BTN_W,
+      TOOL_BTN_H,
       canAfford ? COLOR.pink : COLOR.mutedButton,
     )
-    const hit = this.add.rectangle(btnX, btnCenterY, btnW, 60, 0x000000, 0.001)
+    const hit = this.add.rectangle(btnX, btnCenterY, TOOL_BTN_W, 60, 0x000000, 0.001)
     hit.setInteractive(
-      new Phaser.Geom.Rectangle(0, 0, btnW, 60),
+      new Phaser.Geom.Rectangle(0, 0, TOOL_BTN_W, 60),
       Phaser.Geom.Rectangle.Contains,
     )
     addPressEffect(this, hit, btn)
@@ -752,12 +759,15 @@ export default class UpgradeScene extends Phaser.Scene {
       x: btnX,
       y: btnCenterY,
       text: `Buy — ${COIN_EMOJI} ${item.price}`,
-      style: { fontFamily: 'Georgia', fontSize: '10px', color: COLOR.white },
+      style: { fontFamily: 'Georgia', fontSize: '12px', color: COLOR.white },
       originX: 0.5,
       originY: 0.5,
     })
 
     this.addScroll(iconName, description, stockLabel, perPurchaseText, btn, hit, ...btnLabel.objects)
+
+    const rowBottom = Math.max(stockY + stockLabel.height, btnCenterY + TOOL_BTN_H / 2) + 12
+    return Math.max(TOOL_ROW_MIN_H, rowBottom - rowTop)
   }
 
   drawCard(x, y, w, h) {
@@ -896,7 +906,7 @@ export default class UpgradeScene extends Phaser.Scene {
     const cy = this.scale.height - 110
     const padX = 16
     const padY = 10
-    const flashStyle = { fontFamily: 'Georgia', fontSize: '18px', color }
+    const flashStyle = { fontFamily: 'Georgia', fontSize: '20px', color }
 
     const layout = message.includes(COIN_EMOJI)
       ? addCoinText(this, {
@@ -981,11 +991,11 @@ export default class UpgradeScene extends Phaser.Scene {
       if (tab.onTap) hit.on('pointerdown', tab.onTap)
 
       const color = tab.active ? '#ffffff' : COLOR.inactiveTab
-      const emoji = this.add.text(cx, cy - 12, tab.emoji, { fontSize: '22px' }).setOrigin(0.5)
+      const emoji = this.add.text(cx, cy - 12, tab.emoji, { fontSize: '24px' }).setOrigin(0.5)
       const label = this.add
         .text(cx, cy + 14, tab.label, {
           fontFamily: 'Georgia',
-          fontSize: '12px',
+          fontSize: '14px',
           color,
         })
         .setOrigin(0.5)

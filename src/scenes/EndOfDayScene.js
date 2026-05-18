@@ -153,7 +153,7 @@ export default class EndOfDayScene extends Phaser.Scene {
     const title = this.add
       .text(cx, y, `End of Day ${this.playedDay}`, {
         fontFamily: 'Georgia',
-        fontSize: '26px',
+        fontSize: '28px',
         color: '#5a3e2b',
       })
       .setOrigin(0.5)
@@ -163,7 +163,7 @@ export default class EndOfDayScene extends Phaser.Scene {
     const earnedLine = this.add
       .text(cx, y, `✿ You earned ${starsEarned} stars today!`, {
         fontFamily: 'Georgia',
-        fontSize: '18px',
+        fontSize: '20px',
         color: '#c96b9a',
       })
       .setOrigin(0.5)
@@ -195,7 +195,7 @@ export default class EndOfDayScene extends Phaser.Scene {
       x: innerLeft,
       y,
       text: `Coins earned today: ${COIN_EMOJI} ${this.sessionCoins}`,
-      style: { fontFamily: 'Georgia', fontSize: '15px', color: '#5a3e2b' },
+      style: { fontFamily: 'Georgia', fontSize: '17px', color: '#5a3e2b' },
       originX: 0,
       originY: 0.5,
     })
@@ -208,7 +208,7 @@ export default class EndOfDayScene extends Phaser.Scene {
     const totalLine = this.add
       .text(cx, y, `Total stars: ${this.save.totalStars} → Level ${this.save.shopLevel}`, {
         fontFamily: 'Georgia',
-        fontSize: '15px',
+        fontSize: '17px',
         color: '#5a3e2b',
       })
       .setOrigin(0.5)
@@ -222,7 +222,7 @@ export default class EndOfDayScene extends Phaser.Scene {
     const nextLine = this.add
       .text(cx, y, nextLineText, {
         fontFamily: 'Georgia',
-        fontSize: '13px',
+        fontSize: '15px',
         color: '#8a7a6a',
       })
       .setOrigin(0.5)
@@ -250,7 +250,7 @@ export default class EndOfDayScene extends Phaser.Scene {
       const banner = this.add
         .text(cx, y, `✿ Level Up! Now Level ${newLevel} ✿`, {
           fontFamily: 'Georgia',
-          fontSize: '20px',
+          fontSize: '22px',
           color: '#c96b9a',
         })
         .setOrigin(0.5)
@@ -263,7 +263,7 @@ export default class EndOfDayScene extends Phaser.Scene {
       .text(cx, y, this.getEmilyMessage(starsEarned), {
         fontFamily: 'Georgia',
         fontStyle: 'italic',
-        fontSize: '14px',
+        fontSize: '16px',
         color: '#8a7a6a',
         align: 'center',
         wordWrap: { width: 300 },
@@ -286,14 +286,14 @@ export default class EndOfDayScene extends Phaser.Scene {
     const a = this.add
       .text(left, y, leftStr, {
         fontFamily: 'Georgia',
-        fontSize: '15px',
+        fontSize: '17px',
         color: '#5a3e2b',
       })
       .setOrigin(0, 0.5)
     const b = this.add
       .text(right, y, rightStr, {
         fontFamily: 'Georgia',
-        fontSize: '15px',
+        fontSize: '17px',
         color: '#5a3e2b',
       })
       .setOrigin(1, 0.5)
@@ -320,7 +320,7 @@ export default class EndOfDayScene extends Phaser.Scene {
     const label = this.add
       .text(x, y, '🌱 Plant for tomorrow', {
         fontFamily: 'Georgia',
-        fontSize: '18px',
+        fontSize: '20px',
         color: '#ffffff',
       })
       .setOrigin(0.5)

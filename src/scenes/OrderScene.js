@@ -56,7 +56,7 @@ const COLOR = {
 function hudRow1TextStyle() {
   return {
     fontFamily: 'Georgia',
-    fontSize: '15px',
+    fontSize: '17px',
     color: '#ffffff',
     shadow: {
       offsetX: 1,
@@ -71,7 +71,7 @@ function hudRow1TextStyle() {
 function hudRow2TextStyle() {
   return {
     fontFamily: 'Georgia',
-    fontSize: '14px',
+    fontSize: '16px',
     color: '#ffffff',
     shadow: {
       offsetX: 1,
@@ -312,7 +312,7 @@ export default class OrderScene extends Phaser.Scene {
     this.add
       .text(cx, TITLE_PILL_Y, 'Orders', {
         fontFamily: 'Georgia',
-        fontSize: '22px',
+        fontSize: '24px',
         color: COLOR.brown,
       })
       .setOrigin(0.5, 0.5)
@@ -333,7 +333,7 @@ export default class OrderScene extends Phaser.Scene {
       .text(cx, SUBTITLE_Y, 'Special requests from customers', {
         fontFamily: 'Georgia',
         fontStyle: 'italic',
-        fontSize: '13px',
+        fontSize: '15px',
         color: COLOR.muted,
       })
       .setOrigin(0.5, 0.5)
@@ -489,7 +489,7 @@ export default class OrderScene extends Phaser.Scene {
     const header = this.add
       .text(contentLeft, headerY, headerText, {
         fontFamily: 'Georgia',
-        fontSize: '16px',
+        fontSize: '18px',
         color: COLOR.brown,
       })
       .setOrigin(0, 0)
@@ -499,7 +499,7 @@ export default class OrderScene extends Phaser.Scene {
       .text(contentLeft, needLabelY, 'They need:', {
         fontFamily: 'Georgia',
         fontStyle: 'italic',
-        fontSize: '13px',
+        fontSize: '15px',
         color: COLOR.muted,
       })
       .setOrigin(0, 0)
@@ -523,7 +523,7 @@ export default class OrderScene extends Phaser.Scene {
       const name = this.add
         .text(nameX, rowCy, `${flower.name} ×${req.qty}`, {
           fontFamily: 'Georgia',
-          fontSize: '14px',
+          fontSize: '16px',
           color: hasStock ? '#2d6e2d' : '#8b0000',
         })
         .setOrigin(0, 0.5)
@@ -531,7 +531,7 @@ export default class OrderScene extends Phaser.Scene {
       const stock = this.add
         .text(stockRight, rowCy, `(${inStock} in stock)`, {
           fontFamily: 'Georgia',
-          fontSize: '13px',
+          fontSize: '15px',
           color: COLOR.muted,
         })
         .setOrigin(1, 0.5)
@@ -548,14 +548,14 @@ export default class OrderScene extends Phaser.Scene {
       x: contentLeft,
       y: rewardY + REWARD_LINE_H / 2,
       text: `${COIN_EMOJI} ${order.reward} coins + ✿ 2 stars`,
-      style: { fontFamily: 'Georgia', fontSize: '14px', color: COLOR.brown },
+      style: { fontFamily: 'Georgia', fontSize: '16px', color: COLOR.brown },
       originX: 0,
       originY: 0.5,
     })
     const expiry = this.add
       .text(contentLeft, expiryY, formatExpiry(order.expiresAt), {
         fontFamily: 'Georgia',
-        fontSize: '12px',
+        fontSize: '14px',
         color: COLOR.muted,
       })
       .setOrigin(0, 0)
@@ -587,7 +587,7 @@ export default class OrderScene extends Phaser.Scene {
         canFulfill ? 'Fulfill ✿' : 'Not enough flowers',
         {
           fontFamily: 'Georgia',
-          fontSize: '16px',
+          fontSize: '18px',
           color: '#ffffff',
         },
       )
@@ -678,7 +678,7 @@ export default class OrderScene extends Phaser.Scene {
     const title = this.add
       .text(cx, cy - 14, '✿ All orders fulfilled!', {
         fontFamily: 'Georgia',
-        fontSize: '20px',
+        fontSize: '22px',
         color: COLOR.brown,
       })
       .setOrigin(0.5)
@@ -686,7 +686,7 @@ export default class OrderScene extends Phaser.Scene {
       .text(cx, cy + 22, 'Come back tomorrow for new orders', {
         fontFamily: 'Georgia',
         fontStyle: 'italic',
-        fontSize: '13px',
+        fontSize: '15px',
         color: COLOR.muted,
       })
       .setOrigin(0.5)
@@ -697,7 +697,7 @@ export default class OrderScene extends Phaser.Scene {
   flashMessage(text, color) {
     const cx = this.scale.width / 2
     const cy = this.scale.height - NAV_H - 50
-    const flashStyle = { fontFamily: 'Georgia', fontSize: '17px', color }
+    const flashStyle = { fontFamily: 'Georgia', fontSize: '19px', color }
     const layout = text.includes(COIN_EMOJI)
       ? addCoinText(this, {
           x: cx,
@@ -851,11 +851,11 @@ export default class OrderScene extends Phaser.Scene {
       if (tab.onTap) hit.on('pointerdown', tab.onTap)
 
       const color = tab.active ? '#ffffff' : COLOR.inactiveTab
-      this.add.text(cx, cy - 12, tab.emoji, { fontSize: '22px' }).setOrigin(0.5)
+      this.add.text(cx, cy - 12, tab.emoji, { fontSize: '24px' }).setOrigin(0.5)
       this.add
         .text(cx, cy + 14, tab.label, {
           fontFamily: 'Georgia',
-          fontSize: '12px',
+          fontSize: '14px',
           color,
         })
         .setOrigin(0.5)
@@ -880,7 +880,7 @@ export default class OrderScene extends Phaser.Scene {
     const label = this.add
       .text(0, 0, text, {
         fontFamily: 'Georgia',
-        fontSize: '14px',
+        fontSize: '16px',
         color: '#5a3e2b',
         align: 'center',
         wordWrap: { width: cardW - 28 },

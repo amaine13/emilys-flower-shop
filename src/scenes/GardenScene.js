@@ -79,7 +79,7 @@ function fitImage(img, w, h) {
 function hudRow1TextStyle() {
   return {
     fontFamily: 'Georgia',
-    fontSize: '15px',
+    fontSize: '17px',
     color: '#ffffff',
     shadow: {
       offsetX: 1,
@@ -94,7 +94,7 @@ function hudRow1TextStyle() {
 function hudRow2TextStyle() {
   return {
     fontFamily: 'Georgia',
-    fontSize: '14px',
+    fontSize: '16px',
     color: '#ffffff',
     shadow: {
       offsetX: 1,
@@ -319,7 +319,7 @@ export default class GardenScene extends Phaser.Scene {
     this.add
       .text(cx, HUD_H + 12, 'My Garden', {
         fontFamily: 'Georgia',
-        fontSize: '20px',
+        fontSize: '22px',
         color: COLOR.brown,
       })
       .setOrigin(0.5, 0)
@@ -446,7 +446,7 @@ export default class GardenScene extends Phaser.Scene {
     const plus = this.add
       .text(cx, cy, '+', {
         fontFamily: 'Georgia',
-        fontSize: '36px',
+        fontSize: '38px',
         color: '#ffffff',
       })
       .setOrigin(0.5)
@@ -470,7 +470,7 @@ export default class GardenScene extends Phaser.Scene {
     const name = this.add
       .text(cx, cy + 28, flower.name, {
         fontFamily: 'Georgia',
-        fontSize: '11px',
+        fontSize: '13px',
         color: '#ffffff',
       })
       .setOrigin(0.5)
@@ -479,7 +479,7 @@ export default class GardenScene extends Phaser.Scene {
     const timer = this.add
       .text(cx, cy + 42, formatGrowTime(remaining), {
         fontFamily: 'Georgia',
-        fontSize: '10px',
+        fontSize: '12px',
         color: '#f0e8d8',
       })
       .setOrigin(0.5)
@@ -516,7 +516,7 @@ export default class GardenScene extends Phaser.Scene {
     const ready = this.add
       .text(cx, cy + 46, '✿ Ready!', {
         fontFamily: 'Georgia',
-        fontSize: '11px',
+        fontSize: '13px',
         color: '#ffffff',
       })
       .setOrigin(0.5)
@@ -691,13 +691,13 @@ export default class GardenScene extends Phaser.Scene {
       hit.on('pointerdown', () => this.useGardenTool(tool.id))
 
       const icon = this.add
-        .text(cx, this.TOOLS_TRAY_Y + 19, tool.icon, { fontSize: '24px' })
+        .text(cx, this.TOOLS_TRAY_Y + 19, tool.icon, { fontSize: '26px' })
         .setOrigin(0.5)
         .setDepth(20)
       const name = this.add
         .text(cx, this.TOOLS_TRAY_Y + 44, tool.name.split(' ')[0], {
           fontFamily: 'Georgia',
-          fontSize: '10px',
+          fontSize: '12px',
           color: COLOR.brownMute,
         })
         .setOrigin(0.5)
@@ -708,7 +708,7 @@ export default class GardenScene extends Phaser.Scene {
       const badgeText = this.add
         .text(badge.x, badge.y, `x${this.save.consumables[tool.id] || 0}`, {
           fontFamily: 'Georgia',
-          fontSize: '10px',
+          fontSize: '12px',
           color: COLOR.white,
         })
         .setOrigin(0.5)
@@ -790,7 +790,7 @@ export default class GardenScene extends Phaser.Scene {
     const hint = this.add
       .text(W / 2, HUD_H + 42, 'Tap a growing plot to bloom it ⚡', {
         fontFamily: 'Georgia',
-        fontSize: '16px',
+        fontSize: '18px',
         color: COLOR.white,
       })
       .setOrigin(0.5)
@@ -818,7 +818,7 @@ export default class GardenScene extends Phaser.Scene {
     const cancel = this.add
       .text(W / 2, H - NAV_H - 24, 'Cancel', {
         fontFamily: 'Georgia',
-        fontSize: '16px',
+        fontSize: '18px',
         color: COLOR.white,
       })
       .setOrigin(0.5)
@@ -937,7 +937,7 @@ export default class GardenScene extends Phaser.Scene {
     const title = this.add
       .text(cx, titleY, 'Choose a seed 🌱', {
         fontFamily: 'Georgia',
-        fontSize: '18px',
+        fontSize: '20px',
         color: COLOR.brown,
       })
       .setOrigin(0.5)
@@ -974,7 +974,7 @@ export default class GardenScene extends Phaser.Scene {
       const name = this.add
         .text(0, 0, flower.name, {
           fontFamily: 'Georgia',
-          fontSize: '16px',
+          fontSize: '18px',
           color: COLOR.brown,
         })
         .setOrigin(0, 0.5)
@@ -992,7 +992,7 @@ export default class GardenScene extends Phaser.Scene {
         x: 0,
         y: 0,
         text: `${formatGrowTimeLabel(getEffectiveGrowTimeMs(flower))}    ${COIN_EMOJI} ${flower.seedCost}`,
-        style: { fontFamily: 'Georgia', fontSize: '13px', color: COLOR.brownMute },
+        style: { fontFamily: 'Georgia', fontSize: '15px', color: COLOR.brownMute },
         originX: 0,
         originY: 0.5,
         container: metaContainer,
@@ -1025,7 +1025,7 @@ export default class GardenScene extends Phaser.Scene {
       const btnLabel = this.add
         .text(0, 0, 'Plant', {
           fontFamily: 'Georgia',
-          fontSize: '15px',
+          fontSize: '17px',
           color: COLOR.white,
         })
         .setOrigin(0.5)
@@ -1072,7 +1072,7 @@ export default class GardenScene extends Phaser.Scene {
     const cancelLbl = this.add
       .text(cancelX, cancelY, 'Cancel', {
         fontFamily: 'Georgia',
-        fontSize: '15px',
+        fontSize: '17px',
         color: COLOR.white,
       })
       .setOrigin(0.5)
@@ -1181,7 +1181,7 @@ export default class GardenScene extends Phaser.Scene {
   flashModalWarn(message) {
     const cx = this.scale.width / 2
     this.clearModalWarn()
-    const warnStyle = { fontFamily: 'Georgia', fontSize: '12px', color: '#c0392b' }
+    const warnStyle = { fontFamily: 'Georgia', fontSize: '14px', color: '#c0392b' }
     const layout = message.includes(COIN_EMOJI)
       ? addCoinText(this, {
           x: cx,
@@ -1379,7 +1379,7 @@ export default class GardenScene extends Phaser.Scene {
     const label = this.add
       .text(16, top + 8, 'My Inventory', {
         fontFamily: 'Georgia',
-        fontSize: '13px',
+        fontSize: '15px',
         color: COLOR.brown,
       })
       .setOrigin(0, 0)
@@ -1394,7 +1394,7 @@ export default class GardenScene extends Phaser.Scene {
         .text(w / 2, top + h / 2 + 6, 'Harvest flowers to see them here', {
           fontFamily: 'Georgia',
           fontStyle: 'italic',
-          fontSize: '13px',
+          fontSize: '15px',
           color: '#8a7a6a',
         })
         .setOrigin(0.5)
@@ -1436,7 +1436,7 @@ export default class GardenScene extends Phaser.Scene {
       const name = this.add
         .text(cardCx, cardY + 72, flower.name, {
           fontFamily: 'Georgia',
-          fontSize: '11px',
+          fontSize: '13px',
           color: COLOR.brown,
         })
         .setOrigin(0.5)
@@ -1452,7 +1452,7 @@ export default class GardenScene extends Phaser.Scene {
       const badgeText = this.add
         .text(badgeX, badgeY, `${qty}`, {
           fontFamily: 'Georgia',
-          fontSize: '10px',
+          fontSize: '12px',
           color: COLOR.white,
         })
         .setOrigin(0.5)
@@ -1560,11 +1560,11 @@ export default class GardenScene extends Phaser.Scene {
       if (t.onTap && !this.tutorialMode) hit.on('pointerdown', t.onTap)
 
       const color = t.active ? '#ffffff' : COLOR.inactiveTab
-      this.add.text(cx, cy - 12, t.emoji, { fontSize: '22px' }).setOrigin(0.5)
+      this.add.text(cx, cy - 12, t.emoji, { fontSize: '24px' }).setOrigin(0.5)
       this.add
         .text(cx, cy + 14, t.label, {
           fontFamily: 'Georgia',
-          fontSize: '12px',
+          fontSize: '14px',
           color,
         })
         .setOrigin(0.5)
@@ -1628,7 +1628,7 @@ export default class GardenScene extends Phaser.Scene {
     const arrow = this.add
       .text(cx, baseY - 10, '↓', {
         fontFamily: 'Georgia',
-        fontSize: '28px',
+        fontSize: '30px',
         color: '#c96b9a',
       })
       .setOrigin(0.5)
@@ -1653,7 +1653,7 @@ export default class GardenScene extends Phaser.Scene {
     const label = this.add
       .text(cx, cy, text, {
         fontFamily: 'Georgia',
-        fontSize: '14px',
+        fontSize: '16px',
         color: '#5a3e2b',
         align: 'center',
         wordWrap: { width: cardW - padding * 2 },

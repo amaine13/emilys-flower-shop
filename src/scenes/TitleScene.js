@@ -52,7 +52,7 @@ export default class TitleScene extends Phaser.Scene {
     this.add
       .text(panelX, panelY - 44, "Emily's Flower Shop", {
         fontFamily: 'Georgia',
-        fontSize: '34px',
+        fontSize: '36px',
         color: '#5a3e2b',
         align: 'center',
       })
@@ -62,7 +62,7 @@ export default class TitleScene extends Phaser.Scene {
       .text(panelX, panelY + 26, 'A cozy little world, just for you', {
         fontFamily: 'Georgia',
         fontStyle: 'italic',
-        fontSize: '15px',
+        fontSize: '17px',
         color: '#8a7a6a',
         align: 'center',
       })
@@ -88,7 +88,7 @@ export default class TitleScene extends Phaser.Scene {
     this.add
       .text(cx, cy, '✿ Play', {
         fontFamily: 'Georgia',
-        fontSize: '20px',
+        fontSize: '22px',
         color: '#ffffff',
       })
       .setOrigin(0.5)

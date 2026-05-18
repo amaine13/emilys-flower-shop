@@ -86,7 +86,7 @@ function generateOrderForCustomer(customer, save) {
 function hudRow1TextStyle() {
   return {
     fontFamily: 'Georgia',
-    fontSize: '15px',
+    fontSize: '17px',
     color: '#ffffff',
     shadow: {
       offsetX: 1,
@@ -101,7 +101,7 @@ function hudRow1TextStyle() {
 function hudRow2TextStyle() {
   return {
     fontFamily: 'Georgia',
-    fontSize: '14px',
+    fontSize: '16px',
     color: '#ffffff',
     shadow: {
       offsetX: 1,
@@ -264,7 +264,7 @@ export default class ShopScene extends Phaser.Scene {
     const titleStr = "Welcome to Emily's\nFlower Shop! 🌸"
     const titleStyle = {
       fontFamily: 'Georgia',
-      fontSize: '22px',
+      fontSize: '24px',
       color: '#5a3e2b',
       align: 'center',
       wordWrap: { width: panelW - 32 },
@@ -273,7 +273,7 @@ export default class ShopScene extends Phaser.Scene {
     const subStyle = {
       fontFamily: 'Georgia',
       fontStyle: 'italic',
-      fontSize: '15px',
+      fontSize: '17px',
       color: '#8a7a6a',
       align: 'center',
       wordWrap: { width: panelW - 32 },
@@ -328,7 +328,7 @@ export default class ShopScene extends Phaser.Scene {
       hitH: 80,
       color: COLOR.pink,
       label: 'Open Shop',
-      fontSize: '20px',
+      fontSize: '22px',
       onTap: () => this.beginNewSession(),
       target: this.screenObjects,
     })
@@ -363,7 +363,7 @@ export default class ShopScene extends Phaser.Scene {
     const backLabel = this.add
       .text(cx, backCy, '← Back to Garden', {
         fontFamily: 'Georgia',
-        fontSize: '16px',
+        fontSize: '18px',
         color: '#ffffff',
       })
       .setOrigin(0.5)
@@ -380,7 +380,7 @@ export default class ShopScene extends Phaser.Scene {
       .text(cx, traySectionTop + OPEN_SHOP_TRAY_LABEL_TOP_OFFSET, "✨ Today's Boosts", {
         fontFamily: 'Georgia',
         fontStyle: 'italic',
-        fontSize: '13px',
+        fontSize: '15px',
         color: '#8a7a6a',
       })
       .setOrigin(0.5, 0)
@@ -420,7 +420,7 @@ export default class ShopScene extends Phaser.Scene {
       const buttonCenterY = btnTop + btnH / 2
       const icon = this.add
         .text(colCx, buttonCenterY - 12, active ? '✓' : tool.icon, {
-          fontSize: active ? '24px' : '28px',
+          fontSize: active ? '26px' : '30px',
         })
         .setOrigin(0.5)
 
@@ -428,7 +428,7 @@ export default class ShopScene extends Phaser.Scene {
       const label = this.add
         .text(colCx, buttonCenterY + 16, nameText, {
           fontFamily: 'Georgia',
-          fontSize: '13px',
+          fontSize: '15px',
           color: '#5a3e2b',
           align: 'center',
           wordWrap: { width: btnW - 10 },
@@ -439,7 +439,7 @@ export default class ShopScene extends Phaser.Scene {
       const stockMeasure = this.add
         .text(0, -2000, stockStr, {
           fontFamily: 'Georgia',
-          fontSize: '11px',
+          fontSize: '13px',
           color: '#ffffff',
         })
         .setOrigin(0.5)
@@ -455,7 +455,7 @@ export default class ShopScene extends Phaser.Scene {
       const badgeText = this.add
         .text(pillCx, pillCy, stockStr, {
           fontFamily: 'Georgia',
-          fontSize: '11px',
+          fontSize: '13px',
           color: '#ffffff',
         })
         .setOrigin(0.5)
@@ -531,7 +531,7 @@ export default class ShopScene extends Phaser.Scene {
     objs.push(card)
 
     const emoji = this.add
-      .text(cx, cardTop + padding + 16, '🌸', { fontSize: '32px' })
+      .text(cx, cardTop + padding + 16, '🌸', { fontSize: '34px' })
       .setOrigin(0.5)
       .setDepth(102)
     objs.push(emoji)
@@ -539,7 +539,7 @@ export default class ShopScene extends Phaser.Scene {
     const intro1 = this.add
       .text(cx, cardTop + padding + 50, TUTORIAL_DIALOGUE.customerIntro, {
         fontFamily: 'Georgia',
-        fontSize: '15px',
+        fontSize: '17px',
         color: '#5a3e2b',
         align: 'center',
         wordWrap: { width: cardW - padding * 2 },
@@ -556,7 +556,7 @@ export default class ShopScene extends Phaser.Scene {
         {
           fontFamily: 'Georgia',
           fontStyle: 'italic',
-          fontSize: '14px',
+          fontSize: '16px',
           color: '#8a7a6a',
           align: 'center',
           wordWrap: { width: cardW - padding * 2 },
@@ -570,7 +570,7 @@ export default class ShopScene extends Phaser.Scene {
       .text(cx, cardTop + cardH - padding - 4, 'Tap to continue', {
         fontFamily: 'Georgia',
         fontStyle: 'italic',
-        fontSize: '12px',
+        fontSize: '14px',
         color: '#8a7a6a',
       })
       .setOrigin(0.5)
@@ -732,11 +732,11 @@ export default class ShopScene extends Phaser.Scene {
       if (tab.onTap && !this.tutorialMode) hit.on('pointerdown', tab.onTap)
 
       const color = tab.active ? '#ffffff' : COLOR.inactiveTab
-      const emoji = this.add.text(cx, cy - 12, tab.emoji, { fontSize: '22px' }).setOrigin(0.5)
+      const emoji = this.add.text(cx, cy - 12, tab.emoji, { fontSize: '24px' }).setOrigin(0.5)
       const label = this.add
         .text(cx, cy + 14, tab.label, {
           fontFamily: 'Georgia',
-          fontSize: '12px',
+          fontSize: '14px',
           color,
         })
         .setOrigin(0.5)
@@ -812,7 +812,7 @@ export default class ShopScene extends Phaser.Scene {
       const nameProbe = this.add
         .text(-3000, -3000, cust.name, {
           fontFamily: 'Georgia',
-          fontSize: '15px',
+          fontSize: '17px',
           color: '#5a3e2b',
           fontStyle: 'bold',
         })
@@ -863,9 +863,9 @@ export default class ShopScene extends Phaser.Scene {
       }
     }
 
-    let greetFs = 13
-    let rowFs = 14
-    let rewardFs = 13
+    let greetFs = 15
+    let rowFs = 16
+    let rewardFs = 15
     let tight = false
     let { innerH, gaps } = measureInnerHeight(greetFs, rowFs, rewardFs, tight)
 
@@ -931,7 +931,7 @@ export default class ShopScene extends Phaser.Scene {
     const nameText = this.add
       .text(innerLeft, cy, cust.name, {
         fontFamily: 'Georgia',
-        fontSize: '15px',
+        fontSize: '17px',
         color: '#5a3e2b',
         fontStyle: 'bold',
       })
@@ -1042,7 +1042,7 @@ export default class ShopScene extends Phaser.Scene {
     const nameProbe = this.add
       .text(-3000, -3000, 'Emily', {
         fontFamily: 'Georgia',
-        fontSize: '14px',
+        fontSize: '16px',
         color: '#5a3e2b',
         fontStyle: 'bold',
       })
@@ -1051,7 +1051,7 @@ export default class ShopScene extends Phaser.Scene {
       .text(-3000, -3000, line, {
         fontFamily: 'Georgia',
         fontStyle: 'italic',
-        fontSize: '13px',
+        fontSize: '15px',
         color: '#5a3e2b',
         wordWrap: { width: innerW },
       })
@@ -1099,7 +1099,7 @@ export default class ShopScene extends Phaser.Scene {
     const nameText = this.add
       .text(innerLeft, ty, 'Emily', {
         fontFamily: 'Georgia',
-        fontSize: '14px',
+        fontSize: '16px',
         color: '#5a3e2b',
         fontStyle: 'bold',
       })
@@ -1111,7 +1111,7 @@ export default class ShopScene extends Phaser.Scene {
       .text(innerLeft, ty, line, {
         fontFamily: 'Georgia',
         fontStyle: 'italic',
-        fontSize: '13px',
+        fontSize: '15px',
         color: '#5a3e2b',
         wordWrap: { width: innerW },
       })
@@ -1254,7 +1254,7 @@ export default class ShopScene extends Phaser.Scene {
     const flower = this.add
       .text(x - 6, y, '✿', {
         fontFamily: 'Georgia',
-        fontSize: '13px',
+        fontSize: '15px',
         color: '#ffffff',
       })
       .setOrigin(0.5)
@@ -1310,7 +1310,7 @@ export default class ShopScene extends Phaser.Scene {
       hitH: 80,
       color: COLOR.pink,
       label: 'Fulfill ✿',
-      fontSize: '20px',
+      fontSize: '22px',
       onTap: () => this.handleFulfill(),
       pressEffect: false,
     })
@@ -1322,7 +1322,7 @@ export default class ShopScene extends Phaser.Scene {
       hitH: 80,
       color: COLOR.cancel,
       label: 'Sorry...',
-      fontSize: '20px',
+      fontSize: '22px',
       onTap: () => this.handleSorry(false),
     })
   }
@@ -1380,7 +1380,7 @@ export default class ShopScene extends Phaser.Scene {
       const label = this.add
         .text(this.scale.width / 2, y, banner.text, {
           fontFamily: 'Georgia',
-          fontSize: '13px',
+          fontSize: '15px',
           color: banner.color,
         })
         .setOrigin(0.5)
@@ -1535,7 +1535,7 @@ export default class ShopScene extends Phaser.Scene {
       const text = this.add
         .text(0, 0, line.text, {
           fontFamily: 'Georgia',
-          fontSize: '19px',
+          fontSize: '21px',
           color: line.color,
           align: 'center',
         })
