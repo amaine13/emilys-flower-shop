@@ -1,6 +1,6 @@
 export const GAME = {
   WIDTH: 390,
-  HEIGHT: 844,
+  HEIGHT: 780,
   BG_COLOR: '#fdf6f0',
 }
 

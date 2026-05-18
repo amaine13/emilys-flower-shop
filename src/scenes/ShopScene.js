@@ -133,6 +133,15 @@ export default class ShopScene extends Phaser.Scene {
   create() {
     this.scale.on('resize', () => {
       this.input.setDefaultCursor('default')
+      if (this.tutorialMode) return
+      if (!this._resizeScheduled) {
+        this._resizeScheduled = true
+        this.time.delayedCall(100, () => {
+          this._resizeScheduled = false
+          this.persistSession()
+          this.scene.restart()
+        })
+      }
     })
     const data = this.scene.settings.data || {}
     this.save = data.save || saveManager.init()
@@ -164,7 +173,7 @@ export default class ShopScene extends Phaser.Scene {
     this.timerBarFlower = null
     this.timerBarRedraw = null
     this.timerBarX = 30
-    this.timerBarW = 330
+    this.timerBarW = this.scale.width - 60
     this.timerBarH = 14
     this.timerBarY = 430
     this.emilyBubbleObjects = []
@@ -226,13 +235,15 @@ export default class ShopScene extends Phaser.Scene {
   }
 
   buildBackground() {
-    const bg = this.add.image(GAME.WIDTH / 2, GAME.HEIGHT / 2, 'bg-shop')
-    bg.setDisplaySize(GAME.WIDTH, GAME.HEIGHT)
+    const W = this.scale.width
+    const H = this.scale.height
+    const bg = this.add.image(W / 2, H / 2, 'bg-shop')
+    bg.setDisplaySize(W, H)
   }
 
   showOpenShop() {
     this.clearObjects(this.screenObjects)
-    const cx = GAME.WIDTH / 2
+    const cx = this.scale.width / 2
     const GAP = 16
     const panelW = 320
     const paddingY = 24
@@ -284,7 +295,7 @@ export default class ShopScene extends Phaser.Scene {
     }
     panelContentH += GAP + backBtnH + paddingY
 
-    const panelTop = (GAME.HEIGHT - panelContentH) / 2
+    const panelTop = (this.scale.height - panelContentH) / 2
     const panelH = panelContentH
 
     const panel = this.add.graphics()
@@ -499,15 +510,15 @@ export default class ShopScene extends Phaser.Scene {
   // Intro card shown above bg-shop before the tutorial session begins.
   showTutorialCustomerDialogue(onContinue) {
     const objs = []
-    const cx = GAME.WIDTH / 2
-    const cy = GAME.HEIGHT / 2
+    const cx = this.scale.width / 2
+    const cy = this.scale.height / 2
     const cardW = 320
     const cardH = 260
     const cardTop = cy - cardH / 2
     const padding = 22
 
     const dim = this.add
-      .rectangle(0, 0, GAME.WIDTH, GAME.HEIGHT, 0x000000, 0.55)
+      .rectangle(0, 0, this.scale.width, this.scale.height, 0x000000, 0.55)
       .setOrigin(0, 0)
       .setDepth(100)
     objs.push(dim)
@@ -602,13 +613,13 @@ export default class ShopScene extends Phaser.Scene {
   buildHud() {
     const row1Y = 22
     const row2LabelY = 55
-    const cx = GAME.WIDTH / 2
+    const cx = this.scale.width / 2
     const starBarW = 180
     const starBarH = 6
     const starBarLeft = cx - starBarW / 2
     const starBarTop = 68
 
-    const hud = this.add.rectangle(0, 0, GAME.WIDTH, HUD_H, COLOR.green).setOrigin(0, 0)
+    const hud = this.add.rectangle(0, 0, this.scale.width, HUD_H, COLOR.green).setOrigin(0, 0)
 
     this.hudStarsBarBg = this.add.graphics()
     this.hudStarsBarBg.fillStyle(0x5a7a32, 1)
@@ -673,15 +684,17 @@ export default class ShopScene extends Phaser.Scene {
     this.hudCoins.setText(`${this.save.coins}`)
     this.hudDay.setText(`Day ${this.save.day}`)
     this.hudStarsLabel.setText(formatHudStarsLine(this.save))
-    const cx = GAME.WIDTH / 2
+    const cx = this.scale.width / 2
     const starBarW = 180
     const starBarH = 6
     this.redrawHudStarsBar(cx - starBarW / 2, 68, starBarW, starBarH)
   }
 
   buildNav() {
+    const W = this.scale.width
+    const H = this.scale.height
     const nav = this.add
-      .rectangle(0, GAME.HEIGHT - NAV_H, GAME.WIDTH, NAV_H, COLOR.green)
+      .rectangle(0, H - NAV_H, W, NAV_H, COLOR.green)
       .setOrigin(0, 0)
     this.screenObjects.push(nav)
 
@@ -706,10 +719,10 @@ export default class ShopScene extends Phaser.Scene {
         onTap: () => this.leaveToScene('UpgradeScene'),
       },
     ]
-    const tabW = GAME.WIDTH / tabs.length
+    const tabW = W / tabs.length
     tabs.forEach((tab, i) => {
       const cx = i * tabW + tabW / 2
-      const cy = GAME.HEIGHT - NAV_H / 2
+      const cy = H - NAV_H / 2
       const hit = this.add.rectangle(cx, cy, tabW, 80, 0x000000, 0.001)
       hit.setInteractive(
         new Phaser.Geom.Rectangle(0, 0, tabW, 80),
@@ -1054,7 +1067,7 @@ export default class ShopScene extends Phaser.Scene {
 
   renderEmilyResponseBubble(forcedLine) {
     const bubbleW = 280
-    const bubbleLeft = GAME.WIDTH - 16 - bubbleW
+    const bubbleLeft = this.scale.width - 16 - bubbleW
     const bubblePadX = SHOP_BUBBLE_PAD_X
     const bubblePadY = SHOP_BUBBLE_PAD_Y
     const innerW = bubbleW - bubblePadX * 2
@@ -1110,7 +1123,7 @@ export default class ShopScene extends Phaser.Scene {
   }
 
   applyShopSessionLayout() {
-    const zoneBottom = GAME.HEIGHT - NAV_H
+    const zoneBottom = this.scale.height - NAV_H
     const dotsCy = zoneBottom - SHOP_DOTS_MARGIN_ABOVE_NAV
     const sorryCy = dotsCy - SHOP_GAP_SORRY_DOTS - 11 - SHOP_BTN_H / 2
     const fulfillCy = sorryCy - SHOP_BTN_H / 2 - SHOP_GAP_FULFILL_SORRY - SHOP_BTN_H / 2
@@ -1131,10 +1144,11 @@ export default class ShopScene extends Phaser.Scene {
   }
 
   repositionSessionShopButtons() {
-    const w = 330
+    const W = this.scale.width
+    const w = W - 60
     const h = 60
     const br = Math.min(24, w / 2, h / 2)
-    const cx = GAME.WIDTH / 2
+    const cx = W / 2
     const place = (btn, y, color) => {
       if (!btn) return
       btn.text.setPosition(cx, y)
@@ -1224,7 +1238,7 @@ export default class ShopScene extends Phaser.Scene {
   renderTimerBar() {
     const x = 30
     const y = this._layoutTimerCy ?? 430
-    const w = 330
+    const w = this.scale.width - 60
     const h = 14
     this.timerBarX = x
     this.timerBarW = w
@@ -1285,11 +1299,13 @@ export default class ShopScene extends Phaser.Scene {
   renderActionButtons() {
     const fulfillCy = this._layoutFulfillCy ?? 515
     const sorryCy = this._layoutSorryCy ?? 595
-    const cx = GAME.WIDTH / 2
+    const W = this.scale.width
+    const cx = W / 2
+    const btnW = W - 60
     this.sessionFulfillBtn = this.createSessionActionButton({
       x: cx,
       y: fulfillCy,
-      w: 330,
+      w: btnW,
       h: 60,
       hitH: 80,
       color: COLOR.pink,
@@ -1301,7 +1317,7 @@ export default class ShopScene extends Phaser.Scene {
     this.sessionSorryBtn = this.createSessionActionButton({
       x: cx,
       y: sorryCy,
-      w: 330,
+      w: btnW,
       h: 60,
       hitH: 80,
       color: COLOR.cancel,
@@ -1319,7 +1335,7 @@ export default class ShopScene extends Phaser.Scene {
     this.progressGraphics.clear()
     const gap = 24
     const totalW = gap * (SHOP.WALK_IN_COUNT_PER_DAY - 1)
-    const startX = GAME.WIDTH / 2 - totalW / 2
+    const startX = this.scale.width / 2 - totalW / 2
     const y = this._layoutDotsCy ?? 675
 
     for (let i = 0; i < SHOP.WALK_IN_COUNT_PER_DAY; i++) {
@@ -1362,7 +1378,7 @@ export default class ShopScene extends Phaser.Scene {
       const y = 68 + index * 32
       const h = 28
       const label = this.add
-        .text(GAME.WIDTH / 2, y, banner.text, {
+        .text(this.scale.width / 2, y, banner.text, {
           fontFamily: 'Georgia',
           fontSize: '13px',
           color: banner.color,
@@ -1371,7 +1387,7 @@ export default class ShopScene extends Phaser.Scene {
       const w = Math.max(190, label.width + 24)
       const pill = this.add.graphics()
       pill.fillStyle(banner.bg, 0.95)
-      pill.fillRoundedRect(GAME.WIDTH / 2 - w / 2, y - h / 2, w, h, h / 2)
+      pill.fillRoundedRect(this.scale.width / 2 - w / 2, y - h / 2, w, h, h / 2)
       this.screenObjects.push(pill, label)
       this.activeBannerObjects.push(pill, label)
     })
@@ -1420,8 +1436,10 @@ export default class ShopScene extends Phaser.Scene {
       }
     }
 
+    const W = this.scale.width
+    const H = this.scale.height
     const flash = this.add
-      .rectangle(195, 422, 390, 844, 0x90ee90, 0.25)
+      .rectangle(W / 2, H / 2, W, H, 0x90ee90, 0.25)
       .setDepth(99)
     this.tweens.add({
       targets: flash,
@@ -1534,13 +1552,14 @@ export default class ShopScene extends Phaser.Scene {
       return { text, pill }
     })
 
-    // Stack lines vertically, centered on the original y=725 anchor.
+    // Stack lines vertically, centered near the bottom of the screen.
     const lineSpacing = 44
-    const startY = 725 - ((items.length - 1) * lineSpacing) / 2
+    const cy = this.scale.height - 55
+    const startY = cy - ((items.length - 1) * lineSpacing) / 2
     items.forEach((item, i) => {
       const y = startY + i * lineSpacing
-      item.text.setPosition(GAME.WIDTH / 2, y)
-      item.pill.setPosition(GAME.WIDTH / 2, y)
+      item.text.setPosition(this.scale.width / 2, y)
+      item.pill.setPosition(this.scale.width / 2, y)
     })
 
     const targets = items.flatMap((it) => [it.pill, it.text])

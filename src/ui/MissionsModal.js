@@ -53,16 +53,18 @@ export default class MissionsModal {
 
   open() {
     this.objects = []
-    const cx = GAME.WIDTH / 2
-    const cy = GAME.HEIGHT / 2
+    const W = this.scene.scale.width
+    const H = this.scene.scale.height
+    const cx = W / 2
+    const cy = H / 2
 
     // Dim layer also blocks taps on the underlying scene.
     const dim = this.scene.add
-      .rectangle(0, 0, GAME.WIDTH, GAME.HEIGHT, 0x000000, 0.6)
+      .rectangle(0, 0, W, H, 0x000000, 0.6)
       .setOrigin(0, 0)
       .setDepth(1000)
     dim.setInteractive(
-      new Phaser.Geom.Rectangle(0, 0, GAME.WIDTH, GAME.HEIGHT),
+      new Phaser.Geom.Rectangle(0, 0, W, H),
       Phaser.Geom.Rectangle.Contains,
     )
     this.objects.push(dim)
@@ -533,7 +535,7 @@ export default class MissionsModal {
 export function attachGoalsButton(scene, save) {
   const w = 90
   const h = 32
-  const rightX = GAME.WIDTH - 8
+  const rightX = scene.scale.width - 8
   const cy = 22
   const cx = rightX - w / 2
 

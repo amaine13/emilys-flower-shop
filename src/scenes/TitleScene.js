@@ -14,12 +14,19 @@ export default class TitleScene extends Phaser.Scene {
   create() {
     this.scale.on('resize', () => {
       this.input.setDefaultCursor('default')
+      if (!this._resizeScheduled) {
+        this._resizeScheduled = true
+        this.time.delayedCall(100, () => {
+          this._resizeScheduled = false
+          this.scene.restart()
+        })
+      }
     })
 
     const { width, height } = this.scale
 
-    const bg = this.add.image(GAME.WIDTH / 2, GAME.HEIGHT / 2, 'bg-title')
-    bg.setDisplaySize(GAME.WIDTH, GAME.HEIGHT)
+    const bg = this.add.image(width / 2, height / 2, 'bg-title')
+    bg.setDisplaySize(width, height)
 
     const panelW = 340
     const panelH = 230

@@ -18,8 +18,6 @@ const TITLE_PILL_Y = 115 // "Orders" pill center
 const SUBTITLE_Y = 155 // subtitle center
 const FIRST_CARD_TOP = 185 // first order card top edge
 const SCROLL_ZONE_TOP = FIRST_CARD_TOP
-const SCROLL_ZONE_BOTTOM = GAME.HEIGHT - NAV_H - 20 // 754
-const SCROLL_ZONE_H = SCROLL_ZONE_BOTTOM - SCROLL_ZONE_TOP
 
 const CARD_W = 340
 const CARD_GAP = 16
@@ -156,13 +154,25 @@ export default class OrderScene extends Phaser.Scene {
   create() {
     this.scale.on('resize', () => {
       this.input.setDefaultCursor('default')
+      if (!this._resizeScheduled) {
+        this._resizeScheduled = true
+        this.time.delayedCall(100, () => {
+          this._resizeScheduled = false
+          this.scene.restart({ save: this.save })
+        })
+      }
     })
     this.input.setTopOnly(true)
     playBgMusic(this, this.save)
 
-    const bg = this.add.image(GAME.WIDTH / 2, GAME.HEIGHT / 2, 'bg-shop')
-    bg.setDisplaySize(GAME.WIDTH, GAME.HEIGHT)
-    this.add.rectangle(0, 0, GAME.WIDTH, GAME.HEIGHT, 0x000000, 0.3).setOrigin(0, 0)
+    const W = this.scale.width
+    const H = this.scale.height
+    this.SCROLL_ZONE_BOTTOM = H - NAV_H - 20
+    this.SCROLL_ZONE_H = this.SCROLL_ZONE_BOTTOM - SCROLL_ZONE_TOP
+
+    const bg = this.add.image(W / 2, H / 2, 'bg-shop')
+    bg.setDisplaySize(W, H)
+    this.add.rectangle(0, 0, W, H, 0x000000, 0.3).setOrigin(0, 0)
 
     // State buckets for cards + scroll behavior.
     this.cardVisuals = []
@@ -192,9 +202,9 @@ export default class OrderScene extends Phaser.Scene {
     this.buildTitle()
     this.buildOrders()
     this.orderScrollbar = new Scrollbar(this, {
-      x: GAME.WIDTH - 8,
+      x: this.scale.width - 8,
       y: SCROLL_ZONE_TOP,
-      height: SCROLL_ZONE_H,
+      height: this.SCROLL_ZONE_H,
       orientation: 'vertical',
     })
     this.updateOrderScrollbar()
@@ -221,13 +231,13 @@ export default class OrderScene extends Phaser.Scene {
   buildHud() {
     const row1Y = 22
     const row2LabelY = 55
-    const cx = GAME.WIDTH / 2
+    const cx = this.scale.width / 2
     const starBarW = 180
     const starBarH = 6
     const starBarLeft = cx - starBarW / 2
     const starBarTop = 68
 
-    this.add.rectangle(0, 0, GAME.WIDTH, HUD_H, COLOR.navGreen).setOrigin(0, 0)
+    this.add.rectangle(0, 0, this.scale.width, HUD_H, COLOR.navGreen).setOrigin(0, 0)
 
     this.hudStarsBarBg = this.add.graphics()
     this.hudStarsBarBg.fillStyle(0x5a7a32, 1)
@@ -277,14 +287,14 @@ export default class OrderScene extends Phaser.Scene {
     this.hudCoins.setText(`${this.save.coins}`)
     this.hudDay.setText(`Day ${this.save.day}`)
     this.hudStarsLabel.setText(formatHudStarsLine(this.save))
-    const cx = GAME.WIDTH / 2
+    const cx = this.scale.width / 2
     const starBarW = 180
     const starBarH = 6
     this.redrawHudStarsBar(cx - starBarW / 2, 68, starBarW, starBarH)
   }
 
   buildTitle() {
-    const cx = GAME.WIDTH / 2
+    const cx = this.scale.width / 2
 
     // Each element placed at a fixed y — no container.
     const titlePillW = 200
@@ -425,13 +435,13 @@ export default class OrderScene extends Phaser.Scene {
     this.orderContainer = this.add.container(0, 0)
     const maskGfx = this.make.graphics({ x: 0, y: 0, add: false })
     maskGfx.fillStyle(0xffffff, 1)
-    maskGfx.fillRect(0, SCROLL_ZONE_TOP, GAME.WIDTH, SCROLL_ZONE_H)
+    maskGfx.fillRect(0, SCROLL_ZONE_TOP, this.scale.width, this.SCROLL_ZONE_H)
     this.orderMaskGfx = maskGfx
     this.orderContainer.setMask(
       new Phaser.Display.Masks.GeometryMask(this, maskGfx),
     )
 
-    const cx = GAME.WIDTH / 2
+    const cx = this.scale.width / 2
     let cardTop = FIRST_CARD_TOP
     orders.forEach((order, idx) => {
       const cardH = getOrderCardHeight(order)
@@ -445,7 +455,7 @@ export default class OrderScene extends Phaser.Scene {
 
     const totalH = cardTop - FIRST_CARD_TOP + 24
     this.orderTotalHeight = totalH
-    this.scrollMax = Math.max(0, totalH - SCROLL_ZONE_H)
+    this.scrollMax = Math.max(0, totalH - this.SCROLL_ZONE_H)
     this.scrollY = 0
     this.orderContainer.y = 0
     this.updateOrderScrollbar()
@@ -456,8 +466,8 @@ export default class OrderScene extends Phaser.Scene {
     this.orderScrollbar.update(
       this.scrollY,
       this.scrollMax,
-      SCROLL_ZONE_H,
-      this.orderTotalHeight || SCROLL_ZONE_H,
+      this.SCROLL_ZONE_H,
+      this.orderTotalHeight || this.SCROLL_ZONE_H,
     )
   }
 
@@ -597,7 +607,7 @@ export default class OrderScene extends Phaser.Scene {
       )
       addPressEffect(this, btnHit, btn)
       btnHit.on('pointerdown', (pointer) => {
-        if (pointer.y < SCROLL_ZONE_TOP || pointer.y > SCROLL_ZONE_BOTTOM) return
+        if (pointer.y < SCROLL_ZONE_TOP || pointer.y > this.SCROLL_ZONE_BOTTOM) return
         if (this.touchedButtonIdx === -1) this.touchedButtonIdx = idx
       })
     }
@@ -656,8 +666,8 @@ export default class OrderScene extends Phaser.Scene {
 
   // ---------- Empty state ----------
   showEmptyState() {
-    const cx = GAME.WIDTH / 2
-    const cy = SCROLL_ZONE_TOP + SCROLL_ZONE_H / 2
+    const cx = this.scale.width / 2
+    const cy = SCROLL_ZONE_TOP + this.SCROLL_ZONE_H / 2
     const w = 320
     const h = 160
     const card = this.add.graphics()
@@ -685,8 +695,8 @@ export default class OrderScene extends Phaser.Scene {
 
   // ---------- Flash message ----------
   flashMessage(text, color) {
-    const cx = GAME.WIDTH / 2
-    const cy = GAME.HEIGHT - NAV_H - 50
+    const cx = this.scale.width / 2
+    const cy = this.scale.height - NAV_H - 50
     const flashStyle = { fontFamily: 'Georgia', fontSize: '17px', color }
     const layout = text.includes(COIN_EMOJI)
       ? addCoinText(this, {
@@ -739,7 +749,7 @@ export default class OrderScene extends Phaser.Scene {
   // ---------- Scroll + tap routing ----------
   bindInput() {
     this.input.on('pointerdown', (pointer) => {
-      if (pointer.y < SCROLL_ZONE_TOP || pointer.y > SCROLL_ZONE_BOTTOM) return
+      if (pointer.y < SCROLL_ZONE_TOP || pointer.y > this.SCROLL_ZONE_BOTTOM) return
       this.dragStartY = pointer.y
       this.dragStartScroll = this.scrollY
       this.isDragging = false
@@ -802,8 +812,10 @@ export default class OrderScene extends Phaser.Scene {
 
   // ---------- Nav ----------
   buildNav() {
+    const W = this.scale.width
+    const H = this.scale.height
     this.add
-      .rectangle(0, GAME.HEIGHT - NAV_H, GAME.WIDTH, NAV_H, COLOR.navGreen)
+      .rectangle(0, H - NAV_H, W, NAV_H, COLOR.navGreen)
       .setOrigin(0, 0)
 
     const tabs = [
@@ -827,10 +839,10 @@ export default class OrderScene extends Phaser.Scene {
         onTap: () => this.scene.start('UpgradeScene', { save: this.save }),
       },
     ]
-    const tabW = GAME.WIDTH / tabs.length
+    const tabW = W / tabs.length
     tabs.forEach((tab, i) => {
       const cx = i * tabW + tabW / 2
-      const cy = GAME.HEIGHT - NAV_H / 2
+      const cy = H - NAV_H / 2
       const hit = this.add.rectangle(cx, cy, tabW, 80, 0x000000, 0.001)
       hit.setInteractive(
         new Phaser.Geom.Rectangle(0, 0, tabW, 80),
@@ -856,7 +868,7 @@ export default class OrderScene extends Phaser.Scene {
   // Day 2 first-arrival tooltip: a small pink-bordered card that slides down from
   // above the HUD, holds for 3s, then slides back up and tears itself down.
   showOrdersTooltip() {
-    const cx = GAME.WIDTH / 2
+    const cx = this.scale.width / 2
     const cardW = 320
     const text =
       '✿ Special orders have arrived! Fulfill them for bonus stars and coins!'

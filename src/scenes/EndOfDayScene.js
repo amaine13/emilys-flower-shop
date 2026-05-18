@@ -36,14 +36,22 @@ export default class EndOfDayScene extends Phaser.Scene {
   create() {
     this.scale.on('resize', () => {
       this.input.setDefaultCursor('default')
+      if (!this._resizeScheduled) {
+        this._resizeScheduled = true
+        this.time.delayedCall(100, () => {
+          this._resizeScheduled = false
+          this.scene.restart()
+        })
+      }
     })
+    const sceneData = this.scene.settings.data
     const {
       save,
       playedDay,
       customersServed = 0,
       sessionCoins = 0,
       ordersFulfilled = 0,
-    } = this.scene.settings.data
+    } = sceneData
 
     this.save = save
     playBgMusic(this, this.save)
@@ -55,38 +63,43 @@ export default class EndOfDayScene extends Phaser.Scene {
 
     this.buildBackground()
 
-    const customerStars = starsFromCustomersServed(customersServed)
-    const orderStars = starsFromOrdersFulfilled(ordersFulfilled)
-    let starsEarned = 0
-    starsEarned += customerStars
-    starsEarned += orderStars
+    let starsEarned, customerStars, orderStars, leveledUp, newLevel, nextStars, progressPct
 
-    const prevShopLevel = this.save.shopLevel
-    this.save.totalStars += starsEarned
-    this.save.dailyOrdersFulfilled = 0
+    if (!sceneData._endOfDayComputed) {
+      customerStars = starsFromCustomersServed(customersServed)
+      orderStars = starsFromOrdersFulfilled(ordersFulfilled)
+      starsEarned = customerStars + orderStars
 
-    const newLevel = Math.min(
-      Math.floor(this.save.totalStars / PROGRESSION.STARS_PER_LEVEL) + 1,
-      PROGRESSION.MAX_LEVEL,
-    )
-    const leveledUp = newLevel > prevShopLevel
-    if (leveledUp) {
-      this.save.shopLevel = newLevel
+      const prevShopLevel = this.save.shopLevel
+      this.save.totalStars += starsEarned
+      this.save.dailyOrdersFulfilled = 0
+
+      newLevel = Math.min(
+        Math.floor(this.save.totalStars / PROGRESSION.STARS_PER_LEVEL) + 1,
+        PROGRESSION.MAX_LEVEL,
+      )
+      leveledUp = newLevel > prevShopLevel
+      if (leveledUp) {
+        this.save.shopLevel = newLevel
+      }
+      checkLevelMilestone(this.save)
+      track(this.save, 'earn_stars', starsEarned)
+      generateDailyGoals(this.save)
+
+      const rem = this.save.totalStars % PROGRESSION.STARS_PER_LEVEL
+      nextStars = rem === 0 ? PROGRESSION.STARS_PER_LEVEL : PROGRESSION.STARS_PER_LEVEL - rem
+      progressPct = rem / PROGRESSION.STARS_PER_LEVEL
+
+      if (starsEarned > (this.save.shopStats?.highestStarsInADay ?? 0)) {
+        if (!this.save.shopStats) this.save.shopStats = {}
+        this.save.shopStats.highestStarsInADay = starsEarned
+      }
+
+      saveManager.save(this.save)
+      sceneData._endOfDayComputed = { starsEarned, customerStars, orderStars, leveledUp, newLevel, nextStars, progressPct }
+    } else {
+      ;({ starsEarned, customerStars, orderStars, leveledUp, newLevel, nextStars, progressPct } = sceneData._endOfDayComputed)
     }
-    checkLevelMilestone(this.save)
-    track(this.save, 'earn_stars', starsEarned)
-    generateDailyGoals(this.save)
-
-    const rem = this.save.totalStars % PROGRESSION.STARS_PER_LEVEL
-    const nextStars = rem === 0 ? PROGRESSION.STARS_PER_LEVEL : PROGRESSION.STARS_PER_LEVEL - rem
-    const progressPct = rem / PROGRESSION.STARS_PER_LEVEL
-
-    if (starsEarned > (this.save.shopStats?.highestStarsInADay ?? 0)) {
-      if (!this.save.shopStats) this.save.shopStats = {}
-      this.save.shopStats.highestStarsInADay = starsEarned
-    }
-
-    saveManager.save(this.save)
 
     this.buildCard({
       starsEarned,
@@ -101,9 +114,11 @@ export default class EndOfDayScene extends Phaser.Scene {
   }
 
   buildBackground() {
-    const bg = this.add.image(GAME.WIDTH / 2, GAME.HEIGHT / 2, 'bg-garden')
-    bg.setDisplaySize(GAME.WIDTH, GAME.HEIGHT)
-    this.add.rectangle(195, 422, 390, 844, 0x000000, 0.45)
+    const W = this.scale.width
+    const H = this.scale.height
+    const bg = this.add.image(W / 2, H / 2, 'bg-garden')
+    bg.setDisplaySize(W, H)
+    this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.45)
   }
 
   buildCard({
@@ -115,7 +130,7 @@ export default class EndOfDayScene extends Phaser.Scene {
     nextStars,
     progressPct,
   }) {
-    const cx = GAME.WIDTH / 2
+    const cx = this.scale.width / 2
     const cardW = 340
     const padX = 24
     const innerLeft = cx - cardW / 2 + padX
@@ -125,7 +140,7 @@ export default class EndOfDayScene extends Phaser.Scene {
     if (leveledUp) blockH += 48
     const cardH = blockH
     const cardX = cx - cardW / 2
-    const cardY = (GAME.HEIGHT - cardH) / 2
+    const cardY = (this.scale.height - cardH) / 2
 
     const panel = this.add.graphics()
     panel.fillStyle(0xfef8f2, 1)

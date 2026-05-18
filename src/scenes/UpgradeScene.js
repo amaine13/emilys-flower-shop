@@ -143,6 +143,13 @@ export default class UpgradeScene extends Phaser.Scene {
   create() {
     this.scale.on('resize', () => {
       this.input.setDefaultCursor('default')
+      if (!this._resizeScheduled) {
+        this._resizeScheduled = true
+        this.time.delayedCall(100, () => {
+          this._resizeScheduled = false
+          this.scene.restart()
+        })
+      }
     })
     this.save = this.scene.settings.data.save || saveManager.init()
     this.input.setTopOnly(true)
@@ -165,7 +172,7 @@ export default class UpgradeScene extends Phaser.Scene {
     this.bindUpgradeScroll()
     this.refreshContent()
     this.upgradeScrollbar = new Scrollbar(this, {
-      x: GAME.WIDTH - 8,
+      x: this.scale.width - 8,
       y: HUD_H,
       height: this.scrollViewportHeight(),
       orientation: 'vertical',
@@ -190,12 +197,12 @@ export default class UpgradeScene extends Phaser.Scene {
   }
 
   scrollViewportHeight() {
-    return GAME.HEIGHT - HUD_H - NAV_H
+    return this.scale.height - HUD_H - NAV_H
   }
 
   bindUpgradeScroll() {
     this.input.on('pointerdown', (pointer) => {
-      if (pointer.y < HUD_H || pointer.y > GAME.HEIGHT - NAV_H) return
+      if (pointer.y < HUD_H || pointer.y > this.scale.height - NAV_H) return
       this.upgradePageDragStartY = pointer.y
       this.upgradePageDragStartScroll = this.upgradeScrollY
       this.upgradePageDragging = false
@@ -203,7 +210,7 @@ export default class UpgradeScene extends Phaser.Scene {
 
     this.input.on('pointermove', (pointer) => {
       if (!pointer.isDown) return
-      if (pointer.y < HUD_H || pointer.y > GAME.HEIGHT - NAV_H) return
+      if (pointer.y < HUD_H || pointer.y > this.scale.height - NAV_H) return
       if (this.upgradeScrollMax <= 0) return
       const dy = pointer.y - this.upgradePageDragStartY
       if (Math.abs(dy) > 5) {
@@ -276,21 +283,23 @@ export default class UpgradeScene extends Phaser.Scene {
   }
 
   buildBackground() {
-    const bg = this.add.image(GAME.WIDTH / 2, GAME.HEIGHT / 2, 'bg-garden')
-    bg.setDisplaySize(GAME.WIDTH, GAME.HEIGHT)
-    this.add.rectangle(195, 422, 390, 844, 0x000000, 0.35)
+    const W = this.scale.width
+    const H = this.scale.height
+    const bg = this.add.image(W / 2, H / 2, 'bg-garden')
+    bg.setDisplaySize(W, H)
+    this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.35)
   }
 
   buildHud() {
     const row1Y = 22
     const row2LabelY = 55
-    const cx = GAME.WIDTH / 2
+    const cx = this.scale.width / 2
     const starBarW = 180
     const starBarH = 6
     const starBarLeft = cx - starBarW / 2
     const starBarTop = 68
 
-    const hud = this.add.rectangle(0, 0, GAME.WIDTH, HUD_H, COLOR.green).setOrigin(0, 0)
+    const hud = this.add.rectangle(0, 0, this.scale.width, HUD_H, COLOR.green).setOrigin(0, 0)
 
     this.hudStarsBarBg = this.add.graphics()
     this.hudStarsBarBg.fillStyle(0x5a7a32, 1)
@@ -358,7 +367,7 @@ export default class UpgradeScene extends Phaser.Scene {
     this.hudCoins.setText(`${this.save.coins}`)
     this.hudDay.setText(`Day ${this.save.day}`)
     this.hudStarsLabel.setText(formatHudStarsLine(this.save))
-    const cx = GAME.WIDTH / 2
+    const cx = this.scale.width / 2
     const starBarW = 180
     const starBarH = 6
     this.redrawHudStarsBar(cx - starBarW / 2, 68, starBarW, starBarH)
@@ -396,7 +405,7 @@ export default class UpgradeScene extends Phaser.Scene {
   }
 
   buildTitleInScroll() {
-    const cx = GAME.WIDTH / 2
+    const cx = this.scale.width / 2
     const top = TITLE_PILL_TOP
     const pill = this.add.graphics()
     pill.fillStyle(COLOR.panel, 0.9)
@@ -644,7 +653,7 @@ export default class UpgradeScene extends Phaser.Scene {
   buildToolsCardAt(cardTop) {
     const cardX = CARD_X
     const cardW = CARD_W
-    const cx = GAME.WIDTH / 2
+    const cx = this.scale.width / 2
     const pad = CARD_PAD_Y
     let innerY = cardTop + pad
 
@@ -883,8 +892,8 @@ export default class UpgradeScene extends Phaser.Scene {
   flashMessage(message, color) {
     this.clearFlash()
 
-    const cx = GAME.WIDTH / 2
-    const cy = GAME.HEIGHT - 70 - 40
+    const cx = this.scale.width / 2
+    const cy = this.scale.height - 110
     const padX = 16
     const padY = 10
     const flashStyle = { fontFamily: 'Georgia', fontSize: '18px', color }
@@ -932,8 +941,10 @@ export default class UpgradeScene extends Phaser.Scene {
   }
 
   buildNav() {
+    const W = this.scale.width
+    const H = this.scale.height
     const nav = this.add
-      .rectangle(0, GAME.HEIGHT - NAV_H, GAME.WIDTH, NAV_H, COLOR.green)
+      .rectangle(0, H - NAV_H, W, NAV_H, COLOR.green)
       .setOrigin(0, 0)
     this.uiObjects.push(nav)
 
@@ -958,10 +969,10 @@ export default class UpgradeScene extends Phaser.Scene {
       },
       { emoji: '⭐', label: 'Upgrades', active: true },
     ]
-    const tabW = GAME.WIDTH / tabs.length
+    const tabW = W / tabs.length
     tabs.forEach((tab, index) => {
       const cx = index * tabW + tabW / 2
-      const cy = GAME.HEIGHT - NAV_H / 2
+      const cy = H - NAV_H / 2
       const hit = this.add.rectangle(cx, cy, tabW, 80, 0x000000, 0.001)
       hit.setInteractive(
         new Phaser.Geom.Rectangle(0, 0, tabW, 80),

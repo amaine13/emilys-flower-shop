@@ -12,18 +12,13 @@ import { addPressEffect } from '../ui/buttonEffects.js'
 import { Scrollbar } from '../ui/scrollbar.js'
 import { addCoinText, COIN_EMOJI } from '../ui/coinLabel.js'
 
-// ---------- layout constants ----------
+// ---------- fixed layout constants (do not depend on screen height) ----------
 const HUD_H = 80
 const NAV_H = 70
 const PLOT_SIZE = 120
 const PLOT_GAP = 12
 const PLOT_RADIUS = 12
 const SCROLL_ZONE_TOP = HUD_H + 50
-const INVENTORY_PANEL_TOP = GAME.HEIGHT - 160 - 70 // 614
-const INVENTORY_PANEL_H = 150
-const SCROLL_ZONE_H = INVENTORY_PANEL_TOP - SCROLL_ZONE_TOP // 504
-const TOOLS_TRAY_Y = INVENTORY_PANEL_TOP - 66
-const SEED_PICKER_MAX_PANEL_H = GAME.HEIGHT - 180
 
 const COLOR = {
   navGreen: 0x8aaa64,
@@ -49,7 +44,6 @@ const COLOR = {
   inactiveTab: '#d4eebc',
 }
 
-// Grow duration comes from each flower's growTimeMs in data/flowers.js.
 function getEffectiveGrowTimeMs(flower) {
   return flower.growTimeMs
 }
@@ -76,7 +70,6 @@ function formatGrowTimeLabel(ms) {
   return r === 0 ? `${hours}h` : `${hours}h ${r}m`
 }
 
-// Scale an image so it fits within a w×h box without distorting its aspect ratio.
 function fitImage(img, w, h) {
   const s = Math.min(w / img.width, h / img.height)
   img.setScale(s)
@@ -132,16 +125,34 @@ export default class GardenScene extends Phaser.Scene {
   }
 
   create() {
+    // Derive layout from actual canvas size so the game fills any screen.
+    const W = this.scale.width
+    const H = this.scale.height
+
+    // Height-dependent layout constants stored as instance vars for use in
+    // event handlers and helper methods called after create().
+    this.INVENTORY_PANEL_TOP = H - 160 - NAV_H
+    this.SCROLL_ZONE_H = this.INVENTORY_PANEL_TOP - SCROLL_ZONE_TOP
+    this.TOOLS_TRAY_Y = this.INVENTORY_PANEL_TOP - 66
+    this.SEED_PICKER_MAX_PANEL_H = H - 180
+
     this.scale.on('resize', () => {
       this.input.setDefaultCursor('default')
+      if (!this._resizeScheduled) {
+        this._resizeScheduled = true
+        this.time.delayedCall(100, () => {
+          this._resizeScheduled = false
+          this.scene.restart()
+        })
+      }
     })
+
     this.input.setTopOnly(false)
     playBgMusic(this, this.save)
 
-    const bg = this.add.image(GAME.WIDTH / 2, GAME.HEIGHT / 2, 'bg-garden')
-    bg.setDisplaySize(GAME.WIDTH, GAME.HEIGHT)
+    const bg = this.add.image(W / 2, H / 2, 'bg-garden')
+    bg.setDisplaySize(W, H)
 
-    // Per-plot state buckets.
     this.plotCount = this.save.unlockedPlots
     this.plotSize = PLOT_SIZE
     this.plotLayout = []
@@ -155,7 +166,6 @@ export default class GardenScene extends Phaser.Scene {
     this.modalOpen = false
     this.modalWarn = null
 
-    // Garden vertical scroll + tap state.
     this.gardenScrollY = 0
     this.scrollMax = 0
     this.dragStartY = 0
@@ -166,7 +176,6 @@ export default class GardenScene extends Phaser.Scene {
     this.lastTapTime = 0
     this.lastTapIdx = -1
 
-    // Inventory horizontal scroll state.
     this.inventoryContainer = null
     this.inventoryMaskGfx = null
     this.inventoryScrollX = 0
@@ -185,15 +194,15 @@ export default class GardenScene extends Phaser.Scene {
     this.bindGardenInput()
 
     this.gardenScrollbar = new Scrollbar(this, {
-      x: GAME.WIDTH - 8,
+      x: W - 8,
       y: SCROLL_ZONE_TOP,
-      height: SCROLL_ZONE_H,
+      height: this.SCROLL_ZONE_H,
       orientation: 'vertical',
     })
     this.inventoryScrollbar = new Scrollbar(this, {
       x: 16,
-      y: GAME.HEIGHT - NAV_H - 12,
-      height: GAME.WIDTH - 32,
+      y: H - NAV_H - 12,
+      height: W - 32,
       orientation: 'horizontal',
     })
     this.updateGardenScrollbar()
@@ -208,7 +217,6 @@ export default class GardenScene extends Phaser.Scene {
       }
     })
 
-    // Single shared 1s tick refreshes growing timers and flips plots to ready.
     this.tickEvent = this.time.addEvent({
       delay: 1000,
       loop: true,
@@ -216,7 +224,6 @@ export default class GardenScene extends Phaser.Scene {
       callbackScope: this,
     })
 
-    // Orphan mask graphics are not auto-destroyed; clean them up on shutdown.
     this._seedPickerRestoreTimer = null
 
     this.events.once('shutdown', () => {
@@ -320,16 +327,15 @@ export default class GardenScene extends Phaser.Scene {
 
   // ---------- Plots ----------
   buildPlots() {
+    const W = this.scale.width
     const cols = 2
     const totalRows = Math.ceil(this.plotCount / cols)
 
-    // Spec formula. Clamp prevents negative scroll when grid fits the zone.
     this.gardenContentHeight = totalRows * (PLOT_SIZE + PLOT_GAP)
-    this.scrollMax = Math.max(0, this.gardenContentHeight - SCROLL_ZONE_H)
+    this.scrollMax = Math.max(0, this.gardenContentHeight - this.SCROLL_ZONE_H)
 
-    // Natural plot positions in scene space when gardenScrollY = 0.
     const gridW = cols * PLOT_SIZE + (cols - 1) * PLOT_GAP
-    const startX = (GAME.WIDTH - gridW) / 2 + PLOT_SIZE / 2
+    const startX = (W - gridW) / 2 + PLOT_SIZE / 2
     const startY = SCROLL_ZONE_TOP + PLOT_SIZE / 2 + 8
 
     this.plotLayout = []
@@ -345,7 +351,7 @@ export default class GardenScene extends Phaser.Scene {
 
     const maskGfx = this.make.graphics({ x: 0, y: 0, add: false })
     maskGfx.fillStyle(0xffffff, 1)
-    maskGfx.fillRect(0, SCROLL_ZONE_TOP, GAME.WIDTH, SCROLL_ZONE_H)
+    maskGfx.fillRect(0, SCROLL_ZONE_TOP, W, this.SCROLL_ZONE_H)
     this.gardenMaskGfx = maskGfx
 
     for (let idx = 0; idx < this.plotCount; idx++) {
@@ -359,8 +365,8 @@ export default class GardenScene extends Phaser.Scene {
     this.gardenScrollbar.update(
       this.gardenScrollY,
       this.scrollMax,
-      SCROLL_ZONE_H,
-      this.gardenContentHeight || SCROLL_ZONE_H,
+      this.SCROLL_ZONE_H,
+      this.gardenContentHeight || this.SCROLL_ZONE_H,
     )
   }
 
@@ -380,7 +386,6 @@ export default class GardenScene extends Phaser.Scene {
     this.updateGardenScrollbar()
   }
 
-  // Destroys this plot's old visuals and rebuilds them for the current save state.
   renderPlot(idx) {
     if (this.plotVisuals[idx]) {
       this.plotVisuals[idx].forEach((o) => o.destroy())
@@ -408,7 +413,6 @@ export default class GardenScene extends Phaser.Scene {
 
     if (remainingMs > 0) {
       const timer = this.drawGrowingPlot(idx, cx, cy, flower, remainingMs)
-      // Growing plots are not interactive.
       this.plotState[idx] = { kind: 'growing', timer }
       return
     }
@@ -489,7 +493,6 @@ export default class GardenScene extends Phaser.Scene {
   drawReadyPlot(idx, cx, cy, flower) {
     const half = PLOT_SIZE / 2
 
-    // Soft gold glow drawn behind the dirt card.
     const glow = this.add.graphics()
     glow.lineStyle(8, COLOR.gold, 0.3)
     glow.strokeRoundedRect(cx - half, cy - half, PLOT_SIZE, PLOT_SIZE, PLOT_RADIUS)
@@ -536,8 +539,8 @@ export default class GardenScene extends Phaser.Scene {
   bindGardenInput() {
     this.input.on('pointerdown', (pointer) => {
       if (this.modalOpen) return
-      if (pointer.y >= INVENTORY_PANEL_TOP) return
-      if (pointer.y < SCROLL_ZONE_TOP || pointer.y > SCROLL_ZONE_TOP + SCROLL_ZONE_H) return
+      if (pointer.y >= this.INVENTORY_PANEL_TOP) return
+      if (pointer.y < SCROLL_ZONE_TOP || pointer.y > SCROLL_ZONE_TOP + this.SCROLL_ZONE_H) return
       this.dragActive = true
       this.dragStartY = pointer.y
       this.dragStartScroll = this.gardenScrollY
@@ -616,11 +619,12 @@ export default class GardenScene extends Phaser.Scene {
 
   updateInventoryScrollbar() {
     if (!this.inventoryScrollbar) return
+    const W = this.scale.width
     this.inventoryScrollbar.update(
       this.inventoryScrollX,
       this.inventoryScrollMax,
-      GAME.WIDTH - 32,
-      this.inventoryContentWidth || GAME.WIDTH - 32,
+      W - 32,
+      this.inventoryContentWidth || W - 32,
     )
   }
 
@@ -663,19 +667,19 @@ export default class GardenScene extends Phaser.Scene {
     const buttonSize = 60
     const gap = 12
     const totalW = owned.length * buttonSize + (owned.length - 1) * gap
-    const startX = GAME.WIDTH / 2 - totalW / 2
+    const startX = this.scale.width / 2 - totalW / 2
 
     owned.forEach((tool, index) => {
       const x = startX + index * (buttonSize + gap)
       const cx = x + buttonSize / 2
-      const cy = TOOLS_TRAY_Y + buttonSize / 2
+      const cy = this.TOOLS_TRAY_Y + buttonSize / 2
 
       const bg = this.add.graphics().setDepth(18)
       bg.fillStyle(COLOR.invBg, 0.98)
       bg.lineStyle(2, COLOR.invStroke, 1)
       const trayR = Math.min(24, buttonSize / 2)
-      bg.fillRoundedRect(x, TOOLS_TRAY_Y, buttonSize, buttonSize, trayR)
-      bg.strokeRoundedRect(x, TOOLS_TRAY_Y, buttonSize, buttonSize, trayR)
+      bg.fillRoundedRect(x, this.TOOLS_TRAY_Y, buttonSize, buttonSize, trayR)
+      bg.strokeRoundedRect(x, this.TOOLS_TRAY_Y, buttonSize, buttonSize, trayR)
 
       const hit = this.add.rectangle(cx, cy, buttonSize, buttonSize, 0x000000, 0.001)
         .setDepth(19)
@@ -687,11 +691,11 @@ export default class GardenScene extends Phaser.Scene {
       hit.on('pointerdown', () => this.useGardenTool(tool.id))
 
       const icon = this.add
-        .text(cx, TOOLS_TRAY_Y + 19, tool.icon, { fontSize: '24px' })
+        .text(cx, this.TOOLS_TRAY_Y + 19, tool.icon, { fontSize: '24px' })
         .setOrigin(0.5)
         .setDepth(20)
       const name = this.add
-        .text(cx, TOOLS_TRAY_Y + 44, tool.name.split(' ')[0], {
+        .text(cx, this.TOOLS_TRAY_Y + 44, tool.name.split(' ')[0], {
           fontFamily: 'Georgia',
           fontSize: '10px',
           color: COLOR.brownMute,
@@ -699,7 +703,7 @@ export default class GardenScene extends Phaser.Scene {
         .setOrigin(0.5)
         .setDepth(20)
 
-      const badge = this.add.circle(x + buttonSize - 8, TOOLS_TRAY_Y + 8, 12, COLOR.pink)
+      const badge = this.add.circle(x + buttonSize - 8, this.TOOLS_TRAY_Y + 8, 12, COLOR.pink)
         .setDepth(21)
       const badgeText = this.add
         .text(badge.x, badge.y, `x${this.save.consumables[tool.id] || 0}`, {
@@ -769,19 +773,22 @@ export default class GardenScene extends Phaser.Scene {
       return
     }
 
+    const W = this.scale.width
+    const H = this.scale.height
+
     this.modalOpen = true
     const dim = this.add
-      .rectangle(0, 0, GAME.WIDTH, GAME.HEIGHT, 0x000000, 0.55)
+      .rectangle(0, 0, W, H, 0x000000, 0.55)
       .setOrigin(0, 0)
       .setDepth(100)
     dim.setInteractive(
-      new Phaser.Geom.Rectangle(0, 0, GAME.WIDTH, GAME.HEIGHT),
+      new Phaser.Geom.Rectangle(0, 0, W, H),
       Phaser.Geom.Rectangle.Contains,
     )
     this.modalObjects.push(dim)
 
     const hint = this.add
-      .text(GAME.WIDTH / 2, HUD_H + 42, 'Tap a growing plot to bloom it ⚡', {
+      .text(W / 2, HUD_H + 42, 'Tap a growing plot to bloom it ⚡', {
         fontFamily: 'Georgia',
         fontSize: '16px',
         color: COLOR.white,
@@ -795,7 +802,7 @@ export default class GardenScene extends Phaser.Scene {
       const pos = this.plotPositions[plant.plotIndex]
       if (!pos) return
       const { cx, cy } = pos
-      if (cy < SCROLL_ZONE_TOP || cy > SCROLL_ZONE_TOP + SCROLL_ZONE_H) return
+      if (cy < SCROLL_ZONE_TOP || cy > SCROLL_ZONE_TOP + this.SCROLL_ZONE_H) return
 
       const hit = this.add.rectangle(cx, cy, PLOT_SIZE, PLOT_SIZE, 0xffffff, 0.1)
         .setDepth(103)
@@ -809,7 +816,7 @@ export default class GardenScene extends Phaser.Scene {
     })
 
     const cancel = this.add
-      .text(GAME.WIDTH / 2, GAME.HEIGHT - NAV_H - 24, 'Cancel', {
+      .text(W / 2, H - NAV_H - 24, 'Cancel', {
         fontFamily: 'Georgia',
         fontSize: '16px',
         color: COLOR.white,
@@ -915,7 +922,7 @@ export default class GardenScene extends Phaser.Scene {
     const cancelZoneH = 58
     const listNaturalH = unlocked.length * rowH
     const naturalPanelH = headerH + listNaturalH + cancelZoneH
-    const panelH = Math.min(SEED_PICKER_MAX_PANEL_H, naturalPanelH)
+    const panelH = Math.min(this.SEED_PICKER_MAX_PANEL_H, naturalPanelH)
     const scrollViewportH = panelH - headerH - cancelZoneH
     const scrollMax = Math.max(0, listNaturalH - scrollViewportH)
 
@@ -1172,7 +1179,7 @@ export default class GardenScene extends Phaser.Scene {
   }
 
   flashModalWarn(message) {
-    const cx = GAME.WIDTH / 2
+    const cx = this.scale.width / 2
     this.clearModalWarn()
     const warnStyle = { fontFamily: 'Georgia', fontSize: '12px', color: '#c0392b' }
     const layout = message.includes(COIN_EMOJI)
@@ -1222,8 +1229,6 @@ export default class GardenScene extends Phaser.Scene {
     }
     this.save.coins -= flower.seedCost
 
-    // Tutorial step 1 forces the planted flower to be ready in ~3s by back-dating
-    // plantedAt by (effective grow time − 3000). Other plants are unaffected.
     let plantedAt = Date.now()
     if (this.tutorialMode && this.tutorialStep === 1) {
       const effectiveMs = getEffectiveGrowTimeMs(flower)
@@ -1342,10 +1347,8 @@ export default class GardenScene extends Phaser.Scene {
   }
 
   refreshInventory() {
-    // Tear down scene-level chrome (panel, label, fades, empty state)…
     this.inventoryObjects.forEach((o) => o.destroy())
     this.inventoryObjects = []
-    // …and the previous scrollable card container + its mask.
     if (this.inventoryMaskGfx) {
       this.inventoryMaskGfx.destroy()
       this.inventoryMaskGfx = null
@@ -1359,17 +1362,15 @@ export default class GardenScene extends Phaser.Scene {
     this.inventoryScrollHit = null
     this.inventoryDragStartX = null
 
-    const top = INVENTORY_PANEL_TOP
-    const h = INVENTORY_PANEL_H
-    const w = GAME.WIDTH
+    const top = this.INVENTORY_PANEL_TOP
+    const h = 150 // INVENTORY_PANEL_H
+    const w = this.scale.width
 
-    // Rounded top corners only; bottom hugs the nav.
     const panel = this.add.graphics()
     panel.fillStyle(COLOR.invBg, 0.75)
     panel.fillRoundedRect(0, top, w, h, { tl: 16, tr: 16, bl: 0, br: 0 })
     this.inventoryObjects.push(panel)
 
-    // 1px hairline at the panel's top edge.
     const stroke = this.add
       .rectangle(w / 2, top, w, 1, COLOR.invStroke)
       .setOrigin(0.5, 0)
@@ -1401,8 +1402,6 @@ export default class GardenScene extends Phaser.Scene {
       return
     }
 
-    // Cards live inside a horizontal-scroll container masked to the panel rect
-    // so they never bleed past either edge.
     this.inventoryContainer = this.add.container(0, 0)
     const maskGfx = this.make.graphics({ x: 0, y: 0, add: false })
     maskGfx.fillStyle(0xffffff, 1)
@@ -1461,13 +1460,11 @@ export default class GardenScene extends Phaser.Scene {
       this.inventoryContainer.add([card, sprite, name, badge, badgeText])
     })
 
-    // Scroll bound: content right edge vs visible right edge (mirrored padding).
     const contentRight = startX + (entries.length - 1) * stride + cardW
     const visibleRight = w - startX
     this.inventoryScrollMax = Math.max(0, contentRight - visibleRight)
     this.inventoryContentWidth = contentRight
 
-    // Only show edge fades when there's actually more content to reveal.
     if (this.inventoryScrollMax > 0) {
       const fadeTop = top + 30
       const fadeH = h - 30
@@ -1555,13 +1552,11 @@ export default class GardenScene extends Phaser.Scene {
       const cx = tabW * i + tabW / 2
       const cy = height - NAV_H / 2
 
-      // Invisible plain-Rectangle hit target spans the whole tab.
       const hit = this.add.rectangle(cx, cy, tabW, NAV_H, 0x000000, 0)
       hit.setInteractive(
         new Phaser.Geom.Rectangle(0, 0, tabW, NAV_H),
         Phaser.Geom.Rectangle.Contains,
       )
-      // Tutorial mode locks the nav — taps are routed only to plot[0].
       if (t.onTap && !this.tutorialMode) hit.on('pointerdown', t.onTap)
 
       const color = t.active ? '#ffffff' : COLOR.inactiveTab
@@ -1589,8 +1584,6 @@ export default class GardenScene extends Phaser.Scene {
     }
   }
 
-  // Dims everything except the plot's bounding cell using four framing rects,
-  // then bounces a ↓ arrow above the plot to direct attention.
   drawPlotSpotlight(plotIdx) {
     const pos = this.plotPositions && this.plotPositions[plotIdx]
     if (!pos) return
@@ -1602,8 +1595,8 @@ export default class GardenScene extends Phaser.Scene {
     const top = cy - half
     const bottom = cy + half
     const dimAlpha = 0.6
-    const w = GAME.WIDTH
-    const h = GAME.HEIGHT
+    const w = this.scale.width
+    const h = this.scale.height
     const depth = 50
 
     if (top > 0) {
@@ -1651,11 +1644,10 @@ export default class GardenScene extends Phaser.Scene {
     })
   }
 
-  // Small caption card pinned just below the plot grid, above the inventory.
   drawTutorialTooltip(text) {
-    const cx = GAME.WIDTH / 2
+    const cx = this.scale.width / 2
     const cardW = 280
-    const cy = INVENTORY_PANEL_TOP - 50
+    const cy = this.INVENTORY_PANEL_TOP - 50
     const padding = 10
 
     const label = this.add

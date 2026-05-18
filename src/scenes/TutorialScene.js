@@ -36,7 +36,6 @@ export const DIALOGUE = {
 }
 
 const NAV_H = 70
-const NAV_TOP = GAME.HEIGHT - NAV_H
 
 const COLOR = {
   brown: '#5a3e2b',
@@ -75,12 +74,20 @@ export default class TutorialScene extends Phaser.Scene {
   create() {
     this.scale.on('resize', () => {
       this.input.setDefaultCursor('default')
+      if (!this._resizeScheduled) {
+        this._resizeScheduled = true
+        this.time.delayedCall(100, () => {
+          this._resizeScheduled = false
+          this.scene.restart({ save: this.save, step: this.step })
+        })
+      }
     })
     this.input.setTopOnly(true)
     playBgMusic(this, this.save)
 
-    const bg = this.add.image(GAME.WIDTH / 2, GAME.HEIGHT / 2, 'bg-garden')
-    bg.setDisplaySize(GAME.WIDTH, GAME.HEIGHT)
+    const { width, height } = this.scale
+    const bg = this.add.image(width / 2, height / 2, 'bg-garden')
+    bg.setDisplaySize(width, height)
 
     switch (this.step) {
       case 0:
@@ -115,13 +122,14 @@ export default class TutorialScene extends Phaser.Scene {
     body,
     bodyItalic,
     hint,
-    yCenter = GAME.HEIGHT / 2,
+    yCenter,
     depth = 10,
     onTap = null,
   }) {
     const cardW = 320
     const padding = 22
-    const cx = GAME.WIDTH / 2
+    const cx = this.scale.width / 2
+    const resolvedYCenter = yCenter !== undefined ? yCenter : this.scale.height / 2
     const wrap = cardW - padding * 2
 
     const lines = []
@@ -194,7 +202,7 @@ export default class TutorialScene extends Phaser.Scene {
     })
 
     const cardH = contentH + padding * 2
-    const cardTop = yCenter - cardH / 2
+    const cardTop = resolvedYCenter - cardH / 2
 
     // Background goes in first so text lays on top.
     const cardBg = this.add.graphics().setDepth(depth)
@@ -226,12 +234,14 @@ export default class TutorialScene extends Phaser.Scene {
   // Renders a visual-only 4-tab bottom nav, then darkens everything except the
   // active tab's cell. Returns the spotlit tab's center for arrow placement.
   renderNavWithSpotlight(activeTabKey, onActiveTap) {
+    const NAV_TOP = this.scale.height - NAV_H
+    const W = this.scale.width
     this.add
-      .rectangle(0, NAV_TOP, GAME.WIDTH, NAV_H, COLOR.navGreen)
+      .rectangle(0, NAV_TOP, W, NAV_H, COLOR.navGreen)
       .setOrigin(0, 0)
       .setDepth(1)
 
-    const tabW = GAME.WIDTH / TABS.length
+    const tabW = W / TABS.length
     TABS.forEach((tab, i) => {
       const cx = i * tabW + tabW / 2
       const cy = NAV_TOP + NAV_H / 2
@@ -256,7 +266,7 @@ export default class TutorialScene extends Phaser.Scene {
 
     // Dim every area outside the active cell with four framing rects.
     this.add
-      .rectangle(0, 0, GAME.WIDTH, NAV_TOP, 0x000000, dim)
+      .rectangle(0, 0, W, NAV_TOP, 0x000000, dim)
       .setOrigin(0, 0)
       .setDepth(2)
     if (cellLeft > 0) {
@@ -265,9 +275,9 @@ export default class TutorialScene extends Phaser.Scene {
         .setOrigin(0, 0)
         .setDepth(2)
     }
-    if (cellRight < GAME.WIDTH) {
+    if (cellRight < W) {
       this.add
-        .rectangle(cellRight, NAV_TOP, GAME.WIDTH - cellRight, NAV_H, 0x000000, dim)
+        .rectangle(cellRight, NAV_TOP, W - cellRight, NAV_H, 0x000000, dim)
         .setOrigin(0, 0)
         .setDepth(2)
     }
@@ -331,7 +341,7 @@ export default class TutorialScene extends Phaser.Scene {
   // Step 0 — Welcome.
   renderStep0() {
     this.add
-      .rectangle(0, 0, GAME.WIDTH, GAME.HEIGHT, 0x000000, 0.5)
+      .rectangle(0, 0, this.scale.width, this.scale.height, 0x000000, 0.5)
       .setOrigin(0, 0)
       .setDepth(1)
     this.createDialogueCard({
@@ -355,6 +365,7 @@ export default class TutorialScene extends Phaser.Scene {
 
   // Step 2 — Confirm planting + point at Shop tab.
   renderStep2() {
+    const NAV_TOP = this.scale.height - NAV_H
     const { cx } = this.renderNavWithSpotlight('shop', () => {
       this.save.tutorialStep = 3
       saveManager.save(this.save)
@@ -377,6 +388,7 @@ export default class TutorialScene extends Phaser.Scene {
 
   // Step 4 (front) — Tell player to go back to Garden to harvest.
   renderStep4() {
+    const NAV_TOP = this.scale.height - NAV_H
     const { cx } = this.renderNavWithSpotlight('garden', () => {
       // Garden tutorial back-half: harvest the planted plot.
       saveManager.save(this.save)
@@ -399,7 +411,7 @@ export default class TutorialScene extends Phaser.Scene {
   // Step 5 — Harvest confirmation.
   renderStep5() {
     this.add
-      .rectangle(0, 0, GAME.WIDTH, GAME.HEIGHT, 0x000000, 0.5)
+      .rectangle(0, 0, this.scale.width, this.scale.height, 0x000000, 0.5)
       .setOrigin(0, 0)
       .setDepth(1)
     this.createDialogueCard({
@@ -418,15 +430,17 @@ export default class TutorialScene extends Phaser.Scene {
 
   // Step 6 — Special "End of Day 0" closing screen.
   renderStep6() {
+    const W = this.scale.width
+    const H = this.scale.height
     this.add
-      .rectangle(0, 0, GAME.WIDTH, GAME.HEIGHT, 0x000000, 0.55)
+      .rectangle(0, 0, W, H, 0x000000, 0.55)
       .setOrigin(0, 0)
       .setDepth(1)
 
-    const cx = GAME.WIDTH / 2
+    const cx = W / 2
     const cardW = 340
     const cardH = 500
-    const cardTop = (GAME.HEIGHT - cardH) / 2
+    const cardTop = (H - cardH) / 2
 
     const cardBg = this.add.graphics().setDepth(2)
     cardBg.fillStyle(COLOR.card, 1)
@@ -440,7 +454,7 @@ export default class TutorialScene extends Phaser.Scene {
       .setDepth(3)
     daisy.setScale(0.8)
     const tulip = this.add
-      .image(GAME.WIDTH - 20, cardTop + 70, 'flower-tulip')
+      .image(W - 20, cardTop + 70, 'flower-tulip')
       .setDepth(3)
     tulip.setScale(0.8)
 

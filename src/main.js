@@ -11,15 +11,10 @@ import TutorialScene from './scenes/TutorialScene.js'
 
 const config = {
   type: Phaser.AUTO,
-  width: GAME.WIDTH,
-  height: GAME.HEIGHT,
   backgroundColor: GAME.BG_COLOR,
   parent: 'game-container',
   scale: {
-    mode: Phaser.Scale.FIT,
-    autoCenter: Phaser.Scale.CENTER_BOTH,
-    width: GAME.WIDTH,
-    height: GAME.HEIGHT,
+    mode: Phaser.Scale.RESIZE,
   },
   input: {
     activePointers: 3,
