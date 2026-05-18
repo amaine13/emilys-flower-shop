@@ -1,0 +1,104 @@
+import Phaser from 'phaser'
+import * as saveManager from '../saveManager.js'
+import { GAME } from '../constants.js'
+import { playBgMusic } from '../audioManager.js'
+import { createRoundedFillCentered } from '../ui/roundedUi.js'
+import { addPressEffect } from '../ui/buttonEffects.js'
+
+// Cozy title screen: plain cream backdrop (placeholder), wooden sign, flower accents, and a Play button.
+export default class TitleScene extends Phaser.Scene {
+  constructor() {
+    super('TitleScene')
+  }
+
+  create() {
+    this.scale.on('resize', () => {
+      this.input.setDefaultCursor('default')
+    })
+
+    const { width, height } = this.scale
+
+    const bg = this.add.image(GAME.WIDTH / 2, GAME.HEIGHT / 2, 'bg-title')
+    bg.setDisplaySize(GAME.WIDTH, GAME.HEIGHT)
+
+    const panelW = 340
+    const panelH = 230
+    const panelX = width / 2
+    const panelY = height / 2 - 40
+
+    const panelShadow = this.add.graphics()
+    panelShadow.fillStyle(0xe8c898, 1)
+    panelShadow.fillRoundedRect(
+      panelX - panelW / 2 + 6,
+      panelY - panelH / 2 + 6,
+      panelW,
+      panelH,
+      20,
+    )
+
+    const panel = this.add.graphics()
+    panel.fillStyle(0xfef8f2, 1)
+    panel.lineStyle(4, 0xc8a882, 1)
+    panel.fillRoundedRect(panelX - panelW / 2, panelY - panelH / 2, panelW, panelH, 20)
+    panel.strokeRoundedRect(panelX - panelW / 2, panelY - panelH / 2, panelW, panelH, 20)
+
+    this.add
+      .text(panelX, panelY - 44, "Emily's Flower Shop", {
+        fontFamily: 'Georgia',
+        fontSize: '34px',
+        color: '#5a3e2b',
+        align: 'center',
+      })
+      .setOrigin(0.5)
+
+    this.add
+      .text(panelX, panelY + 26, 'A cozy little world, just for you', {
+        fontFamily: 'Georgia',
+        fontStyle: 'italic',
+        fontSize: '15px',
+        color: '#8a7a6a',
+        align: 'center',
+      })
+      .setOrigin(0.5)
+
+    this.buildPlayButton(width / 2, panelY + panelH / 2 + 50)
+  }
+
+  // Play button: a plain Rectangle (bg + hit area) with a Text on top — no
+  // Container, so the full surface is reliably tappable.
+  buildPlayButton(cx, cy) {
+    const w = 240
+    const h = 56
+
+    const playGraphics = createRoundedFillCentered(this, cx, cy, w, h, 0xc96b9a)
+    const playHitRect = this.add.rectangle(cx, cy, w, h, 0x000000, 0.001)
+    playHitRect.setInteractive(
+      new Phaser.Geom.Rectangle(0, 0, w, h),
+      Phaser.Geom.Rectangle.Contains,
+    )
+    addPressEffect(this, playHitRect, playGraphics)
+
+    this.add
+      .text(cx, cy, '✿ Play', {
+        fontFamily: 'Georgia',
+        fontSize: '20px',
+        color: '#ffffff',
+      })
+      .setOrigin(0.5)
+
+    this.input.setDefaultCursor('default')
+    playHitRect.on('pointerover', () => this.input.setDefaultCursor('pointer'))
+    playHitRect.on('pointerout', () => this.input.setDefaultCursor('default'))
+
+    playHitRect.on('pointerdown', () => {
+      const save = saveManager.init()
+      this.input.setDefaultCursor('default')
+      playBgMusic(this, save)
+      if (!save.tutorialComplete) {
+        this.scene.start('TutorialScene', { save })
+      } else {
+        this.scene.start('GardenScene', { save })
+      }
+    })
+  }
+}
