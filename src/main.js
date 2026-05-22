@@ -38,6 +38,24 @@ const config = {
 
 const game = new Phaser.Game(config)
 
-window.addEventListener('resize', () => {
+// On mobile, window.innerWidth/Height are not reliable the instant a resize
+// or orientationchange fires — the browser needs time to settle. We debounce
+// both events and give orientationchange a longer delay so iOS/Android have
+// finished updating their layout before we commit the new canvas size.
+let _resizeTimer = null
+
+function applyResize() {
   game.scale.resize(Math.min(window.innerWidth, MAX_WIDTH), window.innerHeight)
-})
+}
+
+function scheduleResize(delayMs) {
+  clearTimeout(_resizeTimer)
+  _resizeTimer = setTimeout(applyResize, delayMs)
+}
+
+// Regular resize (browser chrome show/hide, keyboard, etc.) — short debounce.
+window.addEventListener('resize', () => scheduleResize(200))
+
+// orientationchange fires before resize on mobile; claim the slot with a
+// longer delay so the subsequent resize event doesn't shorten it.
+window.addEventListener('orientationchange', () => scheduleResize(400))

@@ -40,10 +40,43 @@
       #game-container canvas {
         display: block;
       }
+      /* Shown in landscape on small screens (phones); hidden on tablets/desktop
+         where height stays large enough to play comfortably in landscape. */
+      #rotate-overlay {
+        display: flex;
+        position: fixed;
+        inset: 0;
+        background: #fdf6f0;
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 16px;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.25s;
+      }
+      @media screen and (orientation: landscape) and (max-height: 500px) {
+        #rotate-overlay {
+          opacity: 1;
+          pointer-events: auto;
+        }
+      }
+      #rotate-overlay p {
+        font-family: Georgia, serif;
+        font-size: 18px;
+        color: #5a3e2b;
+        text-align: center;
+        line-height: 1.6;
+      }
     </style>
   </head>
   <body>
     <div id="game-container"></div>
+    <div id="rotate-overlay">
+      <div style="font-size:52px">🌸</div>
+      <p>Please rotate your<br>device to portrait mode</p>
+    </div>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

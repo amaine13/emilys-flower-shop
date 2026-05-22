@@ -224,6 +224,13 @@ export default class GardenScene extends Phaser.Scene {
       callbackScope: this,
     })
 
+    this.time.addEvent({
+      delay: 2000,
+      loop: true,
+      callback: this.tickGrowEffects,
+      callbackScope: this,
+    })
+
     this._seedPickerRestoreTimer = null
 
     this.events.once('shutdown', () => {
@@ -466,6 +473,15 @@ export default class GardenScene extends Phaser.Scene {
     card.strokeRoundedRect(cx - half, cy - half, PLOT_SIZE, PLOT_SIZE, PLOT_RADIUS)
 
     const pot = this.add.image(cx, cy - 12, 'flower-pot-red').setScale(1.1)
+    // Pot gently bobs up and down while growing
+    this.tweens.add({
+      targets: pot,
+      y: { from: cy - 12, to: cy - 18 },
+      duration: 900,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut',
+    })
 
     const name = this.add
       .text(cx, cy + 28, flower.name, {
@@ -488,6 +504,100 @@ export default class GardenScene extends Phaser.Scene {
     ;[card, pot, name, timer].forEach((o) => this.applyGardenPlotMask(o))
     this.plotVisuals[idx].push(card, pot, name, timer)
     return timer
+  }
+
+  tickGrowEffects() {
+    for (let i = 0; i < this.plotState.length; i++) {
+      if (this.plotState[i]?.kind !== 'growing') continue
+      // Stagger plots slightly so they don't all burst at the same instant
+      this.time.delayedCall(i * 160, () => this.emitGrowEffect(i))
+    }
+  }
+
+  emitGrowEffect(idx) {
+    const layout = this.plotLayout[idx]
+    if (!layout) return
+    const cx = layout.cx
+    const cy = layout.naturalCy + this.gardenScrollY
+    if (cy < SCROLL_ZONE_TOP - 20 || cy > SCROLL_ZONE_TOP + this.SCROLL_ZONE_H + 20) return
+
+    switch (Phaser.Math.Between(0, 3)) {
+      case 0: {
+        // Sparkle burst — 5 colorful dots pop outward from around the pot
+        const burstColors = [0xf0c040, COLOR.pink, 0x8aaa64, 0xffffff, 0xb8e070]
+        for (let i = 0; i < 5; i++) {
+          const angle = (i / 5) * Math.PI * 2
+          const sx = cx + Math.cos(angle) * 7
+          const sy = cy - 14 + Math.sin(angle) * 7
+          const dot = this.add.circle(sx, sy, 2.5, burstColors[i], 1).setDepth(5)
+          this.tweens.add({
+            targets: dot,
+            x: sx + Math.cos(angle) * 24,
+            y: sy + Math.sin(angle) * 24 - 6,
+            alpha: { from: 1, to: 0 },
+            scaleX: { from: 1, to: 0.3 },
+            scaleY: { from: 1, to: 0.3 },
+            duration: Phaser.Math.Between(500, 650),
+            ease: 'Cubic.easeOut',
+            onComplete: () => dot.destroy(),
+          })
+        }
+        break
+      }
+      case 1: {
+        // Rising wisps — 3 soft green circles float up one after another
+        for (let i = 0; i < 3; i++) {
+          this.time.delayedCall(i * 200, () => {
+            const sx = cx + Phaser.Math.Between(-12, 12)
+            const sy = cy - Phaser.Math.Between(8, 18)
+            const wisp = this.add.circle(sx, sy, Phaser.Math.Between(2, 4), 0x90d0a0, 0.85).setDepth(5)
+            this.tweens.add({
+              targets: wisp,
+              y: sy - Phaser.Math.Between(30, 45),
+              x: sx + Phaser.Math.Between(-8, 8),
+              alpha: { from: 0.85, to: 0 },
+              scaleX: { from: 1, to: 0.35 },
+              scaleY: { from: 1, to: 0.35 },
+              duration: Phaser.Math.Between(850, 1050),
+              ease: 'Sine.easeOut',
+              onComplete: () => wisp.destroy(),
+            })
+          })
+        }
+        break
+      }
+      case 2: {
+        // Soil puff — a ring expands from the base of the pot and fades
+        const puff = this.add.circle(cx, cy + 2, 6, COLOR.dirtHighlight, 0).setDepth(5)
+        puff.setStrokeStyle(2, 0xd4b870, 0.9)
+        this.tweens.add({
+          targets: puff,
+          scaleX: { from: 0.5, to: 3.2 },
+          scaleY: { from: 0.5, to: 3.2 },
+          alpha: { from: 1, to: 0 },
+          duration: 750,
+          ease: 'Cubic.easeOut',
+          onComplete: () => puff.destroy(),
+        })
+        break
+      }
+      case 3: {
+        // Leaf drift — a single larger green circle drifts up and sideways slowly
+        const lx = cx + Phaser.Math.Between(-14, 14)
+        const ly = cy - Phaser.Math.Between(6, 16)
+        const leaf = this.add.circle(lx, ly, Phaser.Math.Between(3, 5), 0x6ab840, 1).setDepth(5)
+        this.tweens.add({
+          targets: leaf,
+          y: ly - Phaser.Math.Between(36, 50),
+          x: lx + Phaser.Math.Between(-16, 16),
+          alpha: { from: 1, to: 0 },
+          duration: Phaser.Math.Between(1000, 1300),
+          ease: 'Sine.easeOut',
+          onComplete: () => leaf.destroy(),
+        })
+        break
+      }
+    }
   }
 
   drawReadyPlot(idx, cx, cy, flower) {
@@ -644,8 +754,8 @@ export default class GardenScene extends Phaser.Scene {
       const remainingMs = (plant.plantedAt + growTimeMs) - now
       if (now >= plant.plantedAt + growTimeMs) {
         this.renderPlot(i)
-      } else if (s.timer) {
-        s.timer.setText(formatGrowTime(remainingMs))
+      } else {
+        if (s.timer) s.timer.setText(formatGrowTime(remainingMs))
       }
     }
   }
@@ -1222,6 +1332,115 @@ export default class GardenScene extends Phaser.Scene {
     this.modalWarnParts = null
   }
 
+  /** Pop ring, seed burst, and sparkles when a plot is planted. */
+  playPlantEffect(plotIdx, flower) {
+    const layout = this.plotLayout[plotIdx]
+    if (!layout || !flower?.sprite) return
+
+    const cx = layout.cx
+    const cy = layout.naturalCy + this.gardenScrollY
+    const depth = 90
+
+    // 1. Expanding ring — starts compact, bursts outward
+    const ring = this.add
+      .circle(cx, cy, 18, COLOR.pink, 0)
+      .setStrokeStyle(5, COLOR.pink, 1)
+      .setDepth(depth)
+    this.tweens.add({
+      targets: ring,
+      scaleX: { from: 0.3, to: 4.0 },
+      scaleY: { from: 0.3, to: 4.0 },
+      alpha: { from: 1, to: 0 },
+      duration: 500,
+      ease: 'Cubic.easeOut',
+      onComplete: () => ring.destroy(),
+    })
+
+    // 2. Flower sprite — fitImage FIRST to get target scale, then reset to near-zero so it pops
+    const pop = this.add
+      .image(cx, cy - 4, flower.sprite)
+      .setOrigin(0.5)
+      .setDepth(depth + 1)
+    fitImage(pop, 52, 52)
+    const popEndX = pop.scaleX
+    const popEndY = pop.scaleY
+    pop.setScale(0.01)
+    this.tweens.add({
+      targets: pop,
+      scaleX: { from: 0.01, to: popEndX * 1.4 },
+      scaleY: { from: 0.01, to: popEndY * 1.4 },
+      y: { from: cy - 4, to: cy - 28 },
+      alpha: { from: 1, to: 0 },
+      duration: 580,
+      ease: 'Back.easeOut',
+      onComplete: () => pop.destroy(),
+    })
+
+    // 3. Seed emoji — pops from tiny and floats up
+    const seed = this.add
+      .text(cx, cy + 10, '🌱', { fontFamily: 'Arial, sans-serif', fontSize: '28px' })
+      .setOrigin(0.5)
+      .setAlpha(1)
+      .setDepth(depth + 2)
+    seed.setScale(0.01)
+    this.tweens.add({
+      targets: seed,
+      scaleX: { from: 0.01, to: 1.3 },
+      scaleY: { from: 0.01, to: 1.3 },
+      y: { from: cy + 10, to: cy - 20 },
+      alpha: { from: 1, to: 0 },
+      duration: 520,
+      ease: 'Back.easeOut',
+      onComplete: () => seed.destroy(),
+    })
+
+    // 4. Colored sparkle circles — evenly distributed burst
+    const sparkleColors = [0xf0c040, COLOR.pink, 0x8aaa64, 0xffffff]
+    for (let i = 0; i < 14; i++) {
+      const angle = (i / 14) * Math.PI * 2
+      const endR = Phaser.Math.Between(44, 68)
+      const sx = cx + Math.cos(angle) * 8
+      const sy = cy + Math.sin(angle) * 8
+      const r = Phaser.Math.Between(3, 6)
+      const spark = this.add
+        .circle(sx, sy, r, sparkleColors[i % sparkleColors.length], 1)
+        .setDepth(depth + 2)
+      this.tweens.add({
+        targets: spark,
+        x: sx + Math.cos(angle) * endR,
+        y: sy + Math.sin(angle) * endR - Phaser.Math.Between(12, 30),
+        alpha: { from: 1, to: 0 },
+        scaleX: { from: 1, to: 0.2 },
+        scaleY: { from: 1, to: 0.2 },
+        duration: Phaser.Math.Between(450, 650),
+        ease: 'Cubic.easeOut',
+        onComplete: () => spark.destroy(),
+      })
+    }
+
+    // 5. Soil burst — bright high-contrast dots so they read against dark dirt
+    const dirtColors = [0xfff8e8, 0xf5e090, 0xffffff, 0xddc880]
+    for (let i = 0; i < 8; i++) {
+      const angle = Phaser.Math.FloatBetween(0, Math.PI * 2)
+      const px = cx + Phaser.Math.Between(-10, 10)
+      const py = cy + Phaser.Math.Between(-10, 10)
+      const dot = this.add
+        .circle(px, py, Phaser.Math.Between(3, 6), dirtColors[i % dirtColors.length], 1)
+        .setDepth(depth + 1)
+      this.tweens.add({
+        targets: dot,
+        x: px + Math.cos(angle) * Phaser.Math.Between(28, 52),
+        y: py + Math.sin(angle) * Phaser.Math.Between(28, 52) - Phaser.Math.Between(10, 24),
+        alpha: { from: 1, to: 0 },
+        scaleX: { from: 1, to: 0.3 },
+        scaleY: { from: 1, to: 0.3 },
+        duration: Phaser.Math.Between(320, 480),
+        ease: 'Quad.easeOut',
+        onComplete: () => dot.destroy(),
+      })
+    }
+  }
+
   tryPlant(plotIdx, flower) {
     if (this.save.coins < flower.seedCost) {
       this.flashModalWarn('Not enough coins 🪙')
@@ -1243,7 +1462,8 @@ export default class GardenScene extends Phaser.Scene {
     saveManager.save(this.save)
     this.refreshHud()
     this.closeSeedPicker()
-    this.renderPlot(plotIdx)
+    this.playPlantEffect(plotIdx, flower)
+    this.time.delayedCall(0, () => this.renderPlot(plotIdx))
 
     playSfx(this, 'sfx-coin', 0.4, this.save)
     playSfx(this, 'sfx-snip', 0.6, this.save)
@@ -1291,7 +1511,12 @@ export default class GardenScene extends Phaser.Scene {
     saveManager.save(this.save)
     this.refreshHud()
     this.closeSeedPicker()
-    emptyPlots.forEach((idx) => this.renderPlot(idx))
+    emptyPlots.forEach((idx, i) => {
+      this.time.delayedCall(i * 70, () => {
+        this.playPlantEffect(idx, flower)
+        this.time.delayedCall(0, () => this.renderPlot(idx))
+      })
+    })
     this.refreshToolsTray()
 
     playSfx(this, 'sfx-coin', 0.4, this.save)

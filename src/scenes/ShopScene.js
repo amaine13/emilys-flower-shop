@@ -36,6 +36,7 @@ const OPEN_SHOP_TRAY_BTN_GAP = 16
 /** Must match label Y in buildShopToolsTray (row height includes this inset). */
 const OPEN_SHOP_TRAY_LABEL_ROW_H = 20
 const OPEN_SHOP_TRAY_LABEL_TOP_OFFSET = 10
+const EMILY_BUBBLE_MAX_W = 280
 
 const COLOR = {
   cream: 0xfdf6f0,
@@ -123,6 +124,17 @@ function fitImage(img, w, h) {
   const scale = Math.min(w / img.width, h / img.height)
   img.setScale(scale)
   return img
+}
+
+function getEmilyBubbleLayout(scene) {
+  const bubbleW = Math.min(EMILY_BUBBLE_MAX_W, scene.scale.width - 32)
+  const bubbleLeft = Math.max(SHOP_CONTENT_PAD_X, scene.scale.width - SHOP_CONTENT_PAD_X - bubbleW)
+  const innerW = bubbleW - SHOP_BUBBLE_PAD_X * 2
+  return { bubbleW, bubbleLeft, innerW }
+}
+
+function emilyBodyFontSize(scene) {
+  return scene.scale.height < 700 ? 13 : 15
 }
 
 export default class ShopScene extends Phaser.Scene {
@@ -898,18 +910,16 @@ export default class ShopScene extends Phaser.Scene {
     const emilyLine = Phaser.Math.RND.pick(poolEm)
     const emilyBubbleH = this.measureEmilyChatHeight(emilyLine)
 
-    const layoutRefTop = SHOP_CUSTOMER_BUBBLE_TOP
-    this._customerBubbleBottomY = layoutRefTop + bubbleH
     this._emilyBubbleBottomY =
-      layoutRefTop + bubbleH + SHOP_GAP_CUSTOMER_EMILY + emilyBubbleH
+      HUD_H + bubbleH + SHOP_GAP_CUSTOMER_EMILY + emilyBubbleH
     this.applyShopSessionLayout()
 
     const timerBarTop = this._layoutTimerCy - SHOP_TIMER_BAR_H / 2
-    const availableSpace = timerBarTop - HUD_H
     const totalBubblesHeight = bubbleH + SHOP_GAP_CUSTOMER_EMILY + emilyBubbleH
+    const maxBubbleTop = timerBarTop - totalBubblesHeight - 8
     const bubbleTop = Math.max(
       HUD_H,
-      HUD_H + (availableSpace - totalBubblesHeight) / 2,
+      Math.min(HUD_H + (timerBarTop - HUD_H - totalBubblesHeight) / 2, maxBubbleTop),
     )
 
     const bubble = this.add.graphics()
@@ -1022,6 +1032,7 @@ export default class ShopScene extends Phaser.Scene {
 
     this._customerBubbleBottomY = bubbleTop + bubbleH
     this.renderEmilyResponseBubble(emilyLine)
+    this.applyShopSessionLayout()
   }
 
   clearEmilyBubbleOnly() {
@@ -1034,10 +1045,9 @@ export default class ShopScene extends Phaser.Scene {
   }
 
   measureEmilyChatHeight(line) {
-    const bubbleW = 280
-    const bubblePadX = SHOP_BUBBLE_PAD_X
+    const { innerW } = getEmilyBubbleLayout(this)
     const bubblePadY = SHOP_BUBBLE_PAD_Y
-    const innerW = bubbleW - bubblePadX * 2
+    const bodyFs = emilyBodyFontSize(this)
 
     const nameProbe = this.add
       .text(-3000, -3000, 'Emily', {
@@ -1051,7 +1061,7 @@ export default class ShopScene extends Phaser.Scene {
       .text(-3000, -3000, line, {
         fontFamily: 'Georgia',
         fontStyle: 'italic',
-        fontSize: '15px',
+        fontSize: `${bodyFs}px`,
         color: '#5a3e2b',
         wordWrap: { width: innerW },
       })
@@ -1066,11 +1076,10 @@ export default class ShopScene extends Phaser.Scene {
   }
 
   renderEmilyResponseBubble(forcedLine) {
-    const bubbleW = 280
-    const bubbleLeft = this.scale.width - 16 - bubbleW
+    const { bubbleW, bubbleLeft, innerW } = getEmilyBubbleLayout(this)
     const bubblePadX = SHOP_BUBBLE_PAD_X
     const bubblePadY = SHOP_BUBBLE_PAD_Y
-    const innerW = bubbleW - bubblePadX * 2
+    const bodyFs = emilyBodyFontSize(this)
     const emilyTop = (this._customerBubbleBottomY ?? SHOP_CUSTOMER_BUBBLE_TOP + 180) + SHOP_GAP_CUSTOMER_EMILY
     const strokeColor = 0xb8d8b8
     const fillColor = 0xf0faf0
@@ -1080,13 +1089,42 @@ export default class ShopScene extends Phaser.Scene {
     const line =
       typeof forcedLine === 'string' ? forcedLine : Phaser.Math.RND.pick(pool)
 
-    const bubbleH = this.measureEmilyChatHeight(line)
-
     const pushEmily = (o) => {
       this.emilyBubbleObjects.push(o)
       this.sessionObjects.push(o)
     }
 
+    const innerLeft = bubbleLeft + bubblePadX
+
+    // Measure text heights off-screen so we can size and draw the bubble
+    // background BEFORE the text — Phaser renders in add-order, so the
+    // background must be added to the scene first or it paints over the text.
+    const nameProbe = this.add
+      .text(-9999, -9999, 'Emily', {
+        fontFamily: 'Georgia',
+        fontSize: '16px',
+        color: '#5a3e2b',
+        fontStyle: 'bold',
+      })
+      .setOrigin(0, 0)
+    const nameH = nameProbe.height
+    nameProbe.destroy()
+
+    const bodyProbe = this.add
+      .text(-9999, -9999, line, {
+        fontFamily: 'Georgia',
+        fontStyle: 'italic',
+        fontSize: `${bodyFs}px`,
+        color: '#5a3e2b',
+        wordWrap: { width: innerW },
+      })
+      .setOrigin(0, 0)
+    const bodyH = bodyProbe.height
+    bodyProbe.destroy()
+
+    const bubbleH = bubblePadY + nameH + 8 + bodyH + bubblePadY
+
+    // Background drawn first → sits behind text in the display list
     const bubble = this.add.graphics()
     bubble.fillStyle(fillColor, 1)
     bubble.lineStyle(2, strokeColor, 1)
@@ -1094,7 +1132,7 @@ export default class ShopScene extends Phaser.Scene {
     bubble.strokeRoundedRect(bubbleLeft, emilyTop, bubbleW, bubbleH, 16)
     pushEmily(bubble)
 
-    const innerLeft = bubbleLeft + bubblePadX
+    // Text added after background → renders on top
     let ty = emilyTop + bubblePadY
     const nameText = this.add
       .text(innerLeft, ty, 'Emily', {
@@ -1105,13 +1143,13 @@ export default class ShopScene extends Phaser.Scene {
       })
       .setOrigin(0, 0)
     pushEmily(nameText)
-    ty += nameText.height + 8
+    ty += nameH + 8
 
     const bodyText = this.add
       .text(innerLeft, ty, line, {
         fontFamily: 'Georgia',
         fontStyle: 'italic',
-        fontSize: '15px',
+        fontSize: `${bodyFs}px`,
         color: '#5a3e2b',
         wordWrap: { width: innerW },
       })
