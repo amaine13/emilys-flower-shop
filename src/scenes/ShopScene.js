@@ -20,14 +20,66 @@ const SHOP_CONTENT_PAD_X = 16
 const SHOP_BUBBLE_PAD_X = 12
 const SHOP_BUBBLE_PAD_Y = 16
 const SHOP_CUSTOMER_BUBBLE_TOP = 95
-const SHOP_GAP_CUSTOMER_EMILY = 48
 const SHOP_BTN_H = 60
 const SHOP_GAP_FULFILL_SORRY = 12
 const SHOP_GAP_SORRY_DOTS = 16
-/** Gap from Emily bubble bottom to timer bar top (px). */
-const SHOP_GAP_EMILY_TIMER_TOP = 20
 const SHOP_TIMER_BAR_H = 14
 const SHOP_DOTS_MARGIN_ABOVE_NAV = 28
+
+function shopSessionMinGap(scaleHeight) {
+  return scaleHeight < 700 ? 10 : 12
+}
+
+function shopSessionMaxGap(scaleHeight) {
+  return scaleHeight < 700 ? 16 : 22
+}
+
+function getShopLowerZoneLayout(scaleHeight) {
+  const zoneBottom = scaleHeight - NAV_H
+  const dotsCy = zoneBottom - SHOP_DOTS_MARGIN_ABOVE_NAV
+  const sorryCy = dotsCy - SHOP_GAP_SORRY_DOTS - 11 - SHOP_BTN_H / 2
+  const fulfillCy = sorryCy - SHOP_BTN_H / 2 - SHOP_GAP_FULFILL_SORRY - SHOP_BTN_H / 2
+  const fulfillTop = fulfillCy - SHOP_BTN_H / 2
+  return { zoneBottom, dotsCy, sorryCy, fulfillCy, fulfillTop }
+}
+
+/** Even vertical gaps between customer card, Emily, timer, and Fulfill. */
+function computeShopSessionStackLayout(scaleHeight, customerH, emilyH) {
+  const lower = getShopLowerZoneLayout(scaleHeight)
+  const { fulfillTop, fulfillCy, sorryCy, dotsCy } = lower
+  const zoneTop = HUD_H
+  const contentH = customerH + emilyH + SHOP_TIMER_BAR_H
+  const numGaps = 4
+  const available = fulfillTop - zoneTop - contentH
+  const minGap = shopSessionMinGap(scaleHeight)
+  const maxGap = shopSessionMaxGap(scaleHeight)
+
+  let gap
+  if (available <= 0) {
+    gap = 4
+  } else if (available < numGaps * minGap) {
+    gap = available / numGaps
+  } else {
+    gap = Phaser.Math.Clamp(available / numGaps, minGap, maxGap)
+    const slack = available - (contentH + numGaps * gap)
+    if (slack > 0) gap += slack / numGaps
+  }
+
+  const bubbleTop = zoneTop + gap
+  const emilyTop = bubbleTop + customerH + gap
+  const timerCy = emilyTop + emilyH + gap + SHOP_TIMER_BAR_H / 2
+
+  return {
+    bubbleTop,
+    emilyTop,
+    timerCy,
+    sessionGap: gap,
+    fulfillTop,
+    fulfillCy,
+    sorryCy,
+    dotsCy,
+  }
+}
 /** Open Shop tray: boosts label + gap + button row height. */
 const OPEN_SHOP_TRAY_BOOSTS_GAP = 10
 const OPEN_SHOP_TRAY_BTN_H = 80
@@ -783,6 +835,7 @@ export default class ShopScene extends Phaser.Scene {
     this.renderTimerBar()
     this.renderActionButtons()
     this.renderProgressDots()
+    this.repositionLowerShopUi()
 
     playSfx(this, 'sfx-bell', 0.6, this.save)
   }
@@ -797,7 +850,6 @@ export default class ShopScene extends Phaser.Scene {
     const bubblePadY = SHOP_BUBBLE_PAD_Y
     const innerLeft = bubbleLeft + bubblePadX
     const innerW = bubbleW - bubblePadX * 2
-    const MIN_BUBBLE_H = 180
     const MAX_BUBBLE_H = 280
     const strokeColor = 0xe0c8b0
 
@@ -903,24 +955,38 @@ export default class ShopScene extends Phaser.Scene {
       ;({ innerH, gaps } = measureInnerHeight(greetFs, rowFs, rewardFs, tight))
     }
 
-    const bubbleH = Math.max(MIN_BUBBLE_H, Math.min(innerH, MAX_BUBBLE_H))
+    let bubbleH = Math.min(innerH, MAX_BUBBLE_H)
 
     const hasStockEm = this.hasEnoughStock()
     const poolEm = hasStockEm ? EMILY_HAS_STOCK : EMILY_MISSING_STOCK
     const emilyLine = Phaser.Math.RND.pick(poolEm)
-    const emilyBubbleH = this.measureEmilyChatHeight(emilyLine)
+    let emilyBubbleH = this.measureEmilyChatHeight(emilyLine)
 
-    this._emilyBubbleBottomY =
-      HUD_H + bubbleH + SHOP_GAP_CUSTOMER_EMILY + emilyBubbleH
-    this.applyShopSessionLayout()
-
-    const timerBarTop = this._layoutTimerCy - SHOP_TIMER_BAR_H / 2
-    const totalBubblesHeight = bubbleH + SHOP_GAP_CUSTOMER_EMILY + emilyBubbleH
-    const maxBubbleTop = timerBarTop - totalBubblesHeight - 8
-    const bubbleTop = Math.max(
-      HUD_H,
-      Math.min(HUD_H + (timerBarTop - HUD_H - totalBubblesHeight) / 2, maxBubbleTop),
+    let layout = computeShopSessionStackLayout(
+      this.scale.height,
+      bubbleH,
+      emilyBubbleH,
     )
+    const minGap = shopSessionMinGap(this.scale.height)
+    if (layout.sessionGap < minGap) {
+      const needed =
+        minGap * 4 + bubbleH + emilyBubbleH + SHOP_TIMER_BAR_H - (layout.fulfillTop - HUD_H)
+      if (needed > 0) {
+        bubbleH = Math.max(innerH, bubbleH - needed)
+        layout = computeShopSessionStackLayout(
+          this.scale.height,
+          bubbleH,
+          emilyBubbleH,
+        )
+      }
+    }
+
+    const bubbleTop = layout.bubbleTop
+    this._layoutBubbleTop = layout.bubbleTop
+    this._layoutEmilyTop = layout.emilyTop
+    this._layoutTimerCy = layout.timerCy
+    this._sessionCustomerH = bubbleH
+    this._sessionEmilyH = emilyBubbleH
 
     const bubble = this.add.graphics()
     bubble.fillStyle(0xfef8f2, 1)
@@ -1071,8 +1137,7 @@ export default class ShopScene extends Phaser.Scene {
     nameProbe.destroy()
     bodyProbe.destroy()
 
-    const MIN_EMILY_H = 100
-    return Math.max(MIN_EMILY_H, innerMeasured)
+    return innerMeasured
   }
 
   renderEmilyResponseBubble(forcedLine) {
@@ -1080,7 +1145,10 @@ export default class ShopScene extends Phaser.Scene {
     const bubblePadX = SHOP_BUBBLE_PAD_X
     const bubblePadY = SHOP_BUBBLE_PAD_Y
     const bodyFs = emilyBodyFontSize(this)
-    const emilyTop = (this._customerBubbleBottomY ?? SHOP_CUSTOMER_BUBBLE_TOP + 180) + SHOP_GAP_CUSTOMER_EMILY
+    const emilyTop =
+      typeof this._layoutEmilyTop === 'number'
+        ? this._layoutEmilyTop
+        : (this._customerBubbleBottomY ?? SHOP_CUSTOMER_BUBBLE_TOP + 180) + 16
     const strokeColor = 0xb8d8b8
     const fillColor = 0xf0faf0
 
@@ -1157,28 +1225,32 @@ export default class ShopScene extends Phaser.Scene {
     pushEmily(bodyText)
 
     this._emilyBubbleBottomY = emilyTop + bubbleH
+    this._sessionEmilyH = bubbleH
     this._emilyStockSnapshot = this.hasEnoughStock()
   }
 
   applyShopSessionLayout() {
-    const zoneBottom = this.scale.height - NAV_H
-    const dotsCy = zoneBottom - SHOP_DOTS_MARGIN_ABOVE_NAV
-    const sorryCy = dotsCy - SHOP_GAP_SORRY_DOTS - 11 - SHOP_BTN_H / 2
-    const fulfillCy = sorryCy - SHOP_BTN_H / 2 - SHOP_GAP_FULFILL_SORRY - SHOP_BTN_H / 2
-    const fulfillTop = fulfillCy - SHOP_BTN_H / 2
-    const emilyBottom =
-      typeof this._emilyBubbleBottomY === 'number'
-        ? this._emilyBubbleBottomY
-        : (this._customerBubbleBottomY ?? SHOP_CUSTOMER_BUBBLE_TOP + 180) +
-          SHOP_GAP_CUSTOMER_EMILY +
-          100
-    const minTimerCy =
-      emilyBottom + SHOP_GAP_EMILY_TIMER_TOP + SHOP_TIMER_BAR_H / 2
-    const relaxedTimerCy = (emilyBottom + SHOP_GAP_EMILY_TIMER_TOP + fulfillTop) / 2
-    this._layoutTimerCy = Math.max(minTimerCy, relaxedTimerCy)
-    this._layoutFulfillCy = fulfillCy
-    this._layoutSorryCy = sorryCy
-    this._layoutDotsCy = dotsCy
+    const customerH =
+      typeof this._customerBubbleBottomY === 'number' &&
+      typeof this._layoutBubbleTop === 'number'
+        ? this._customerBubbleBottomY - this._layoutBubbleTop
+        : this._sessionCustomerH ?? 180
+    const emilyH =
+      typeof this._emilyBubbleBottomY === 'number' &&
+      typeof this._layoutEmilyTop === 'number'
+        ? this._emilyBubbleBottomY - this._layoutEmilyTop
+        : this._sessionEmilyH ?? 100
+    const layout = computeShopSessionStackLayout(
+      this.scale.height,
+      customerH,
+      emilyH,
+    )
+    this._layoutBubbleTop = layout.bubbleTop
+    this._layoutEmilyTop = layout.emilyTop
+    this._layoutTimerCy = layout.timerCy
+    this._layoutFulfillCy = layout.fulfillCy
+    this._layoutSorryCy = layout.sorryCy
+    this._layoutDotsCy = layout.dotsCy
   }
 
   repositionSessionShopButtons() {
@@ -1224,7 +1296,24 @@ export default class ShopScene extends Phaser.Scene {
     if (!this.currentCustomer || this.isResolving) return
     if (!this.timerTween) return
     this.clearEmilyBubbleOnly()
-    this.renderEmilyResponseBubble()
+    const hasStock = this.hasEnoughStock()
+    const pool = hasStock ? EMILY_HAS_STOCK : EMILY_MISSING_STOCK
+    const emilyLine = Phaser.Math.RND.pick(pool)
+    const customerH =
+      typeof this._customerBubbleBottomY === 'number' &&
+      typeof this._layoutBubbleTop === 'number'
+        ? this._customerBubbleBottomY - this._layoutBubbleTop
+        : this._sessionCustomerH ?? 180
+    const emilyH = this.measureEmilyChatHeight(emilyLine)
+    const layout = computeShopSessionStackLayout(
+      this.scale.height,
+      customerH,
+      emilyH,
+    )
+    this._layoutEmilyTop = layout.emilyTop
+    this._layoutTimerCy = layout.timerCy
+    this._sessionEmilyH = emilyH
+    this.renderEmilyResponseBubble(emilyLine)
     this.repositionLowerShopUi()
   }
 
@@ -1285,10 +1374,12 @@ export default class ShopScene extends Phaser.Scene {
 
     const bg = this.add.graphics()
     this.timerBarBg = bg
+    bg.setDepth(20)
     bg.fillStyle(COLOR.timerBg, 1)
     bg.fillRoundedRect(x, y - h / 2, w, h, h / 2)
 
     this.timerFill = this.add.graphics()
+    this.timerFill.setDepth(21)
     const flower = this.add
       .text(x - 6, y, '✿', {
         fontFamily: 'Georgia',
@@ -1296,6 +1387,7 @@ export default class ShopScene extends Phaser.Scene {
         color: '#ffffff',
       })
       .setOrigin(0.5)
+      .setDepth(22)
     this.timerBarFlower = flower
 
     // Resume tween duration + initial bar fraction if we restored mid-customer.
