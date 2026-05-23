@@ -28,10 +28,14 @@ export default class TitleScene extends Phaser.Scene {
     const bg = this.add.image(width / 2, height / 2, 'bg-title')
     bg.setDisplaySize(width, height)
 
-    const panelW = 340
+    const panelSideMargin = 16
+    const panelW = Math.min(340, width - panelSideMargin * 2)
     const panelH = 230
     const panelX = width / 2
     const panelY = height / 2 - 40
+    const titleInnerPad = 20
+    const titleMaxW = panelW - titleInnerPad * 2
+    const titleFontSize = width < 360 ? 24 : width < 400 ? 28 : width < 440 ? 32 : 36
 
     const panelShadow = this.add.graphics()
     panelShadow.fillStyle(0xe8c898, 1)
@@ -52,9 +56,11 @@ export default class TitleScene extends Phaser.Scene {
     this.add
       .text(panelX, panelY - 44, "Emily's Flower Shop", {
         fontFamily: 'Georgia',
-        fontSize: '36px',
+        fontSize: `${titleFontSize}px`,
         color: '#5a3e2b',
         align: 'center',
+        wordWrap: { width: titleMaxW },
+        lineSpacing: 4,
       })
       .setOrigin(0.5)
 
