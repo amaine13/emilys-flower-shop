@@ -828,10 +828,10 @@ export default class GardenScene extends Phaser.Scene {
     const W = this.scale.width
     const gridW = 2 * PLOT_SIZE + PLOT_GAP
     const gridRightX = Math.round((W - gridW) / 2 + gridW)
-    // Scale button size with the available gutter width so it fills naturally on all devices
     const gutterW = W - 8 - gridRightX  // space between grid right edge and scrollbar
-    const buttonSize = Math.max(40, Math.min(56, gutterW - 4))
-    const gap = 8
+    const isMobile = W < 600
+    const buttonSize = isMobile ? 36 : Math.max(40, Math.min(56, gutterW - 4))
+    const gap = isMobile ? 6 : 8
     const bx = Math.round(gridRightX + gutterW / 2)
     // Center the stack vertically between the HUD bottom and the inventory tray top
     const totalH = owned.length * buttonSize + (owned.length - 1) * gap
