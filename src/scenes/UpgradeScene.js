@@ -1000,7 +1000,7 @@ export default class UpgradeScene extends Phaser.Scene {
       if (tab.onTap) hit.on('pointerdown', tab.onTap)
 
       const color = tab.active ? '#ffffff' : COLOR.inactiveTab
-      const emoji = this.add.text(cx, cy - 12, tab.emoji, { fontSize: '24px' }).setOrigin(0.5)
+      const emoji = this.add.text(cx, cy - 12, tab.emoji, { fontSize: '24px' }).setOrigin(0.5).setShadow(1, 2, '#000000', 4)
       const label = this.add
         .text(cx, cy + 14, tab.label, {
           fontFamily: 'Georgia',
@@ -1008,6 +1008,7 @@ export default class UpgradeScene extends Phaser.Scene {
           color,
         })
         .setOrigin(0.5)
+        .setShadow(1, 2, '#000000', 4)
       this.uiObjects.push(hit, emoji, label)
 
       if (tab.active) {

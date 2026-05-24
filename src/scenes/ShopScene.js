@@ -805,7 +805,7 @@ export default class ShopScene extends Phaser.Scene {
       if (tab.onTap && !this.tutorialMode) hit.on('pointerdown', tab.onTap)
 
       const color = tab.active ? '#ffffff' : COLOR.inactiveTab
-      const emoji = this.add.text(cx, cy - 12, tab.emoji, { fontSize: '24px' }).setOrigin(0.5)
+      const emoji = this.add.text(cx, cy - 12, tab.emoji, { fontSize: '24px' }).setOrigin(0.5).setShadow(1, 2, '#000000', 4)
       const label = this.add
         .text(cx, cy + 14, tab.label, {
           fontFamily: 'Georgia',
@@ -813,6 +813,7 @@ export default class ShopScene extends Phaser.Scene {
           color,
         })
         .setOrigin(0.5)
+        .setShadow(1, 2, '#000000', 4)
       this.screenObjects.push(hit, emoji, label)
 
       if (tab.active) {
@@ -1607,15 +1608,18 @@ export default class ShopScene extends Phaser.Scene {
     const bx = fulfillBtn.text.x
     const by = fulfillBtn.text.y - 20
 
-    const floater = this.add
-      .text(bx, by, `+${tip} 🪙`, {
-        fontFamily: 'Georgia',
-        fontSize: '23px',
-        color: '#f0c040',
-      })
-      .setOrigin(0.5)
-      .setDepth(101)
-      .setShadow(1, 1, '#000000', 4)
+    const style = { fontFamily: 'Georgia', fontSize: '23px', color: '#f0c040' }
+    const { objects } = addCoinText(this, {
+      x: 0,
+      y: 0,
+      text: `+${tip} ${COIN_EMOJI}`,
+      style,
+      originX: 0.5,
+      originY: 0.5,
+    })
+    objects.forEach((o) => { if (o.setShadow) o.setShadow(1, 1, '#000000', 4) })
+
+    const floater = this.add.container(bx, by, objects).setDepth(101)
 
     this.tweens.add({
       targets: floater,

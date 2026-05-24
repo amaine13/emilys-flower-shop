@@ -136,7 +136,6 @@ export default class GardenScene extends Phaser.Scene {
     // event handlers and helper methods called after create().
     this.INVENTORY_PANEL_TOP = H - 160 - NAV_H
     this.SCROLL_ZONE_H = this.INVENTORY_PANEL_TOP - SCROLL_ZONE_TOP
-    this.TOOLS_TRAY_Y = this.INVENTORY_PANEL_TOP - 66
     this.SEED_PICKER_MAX_PANEL_H = H - 180
 
     this.scale.on('resize', () => {
@@ -826,24 +825,31 @@ export default class GardenScene extends Phaser.Scene {
     )
     if (owned.length === 0) return
 
-    const buttonSize = 60
-    const gap = 12
-    const totalW = owned.length * buttonSize + (owned.length - 1) * gap
-    const startX = this.scale.width / 2 - totalW / 2
+    const W = this.scale.width
+    const gridW = 2 * PLOT_SIZE + PLOT_GAP
+    const gridRightX = Math.round((W - gridW) / 2 + gridW)
+    // Scale button size with the available gutter width so it fills naturally on all devices
+    const gutterW = W - 8 - gridRightX  // space between grid right edge and scrollbar
+    const buttonSize = Math.max(40, Math.min(56, gutterW - 4))
+    const gap = 8
+    const bx = Math.round(gridRightX + gutterW / 2)
+    // Center the stack vertically between the HUD bottom and the inventory tray top
+    const totalH = owned.length * buttonSize + (owned.length - 1) * gap
+    const startY = Math.round((HUD_H + this.INVENTORY_PANEL_TOP) / 2 - totalH / 2)
 
     owned.forEach((tool, index) => {
-      const x = startX + index * (buttonSize + gap)
-      const cx = x + buttonSize / 2
-      const cy = this.TOOLS_TRAY_Y + buttonSize / 2
+      const by = startY + index * (buttonSize + gap)
+      const cy = by + buttonSize / 2
+      const x = bx - buttonSize / 2
 
       const bg = this.add.graphics().setDepth(18)
       bg.fillStyle(COLOR.invBg, 0.98)
       bg.lineStyle(2, COLOR.invStroke, 1)
-      const trayR = Math.min(24, buttonSize / 2)
-      bg.fillRoundedRect(x, this.TOOLS_TRAY_Y, buttonSize, buttonSize, trayR)
-      bg.strokeRoundedRect(x, this.TOOLS_TRAY_Y, buttonSize, buttonSize, trayR)
+      const trayR = Math.min(20, buttonSize / 2)
+      bg.fillRoundedRect(x, by, buttonSize, buttonSize, trayR)
+      bg.strokeRoundedRect(x, by, buttonSize, buttonSize, trayR)
 
-      const hit = this.add.rectangle(cx, cy, buttonSize, buttonSize, 0x000000, 0.001)
+      const hit = this.add.rectangle(bx, cy, buttonSize, buttonSize, 0x000000, 0.001)
         .setDepth(19)
       hit.setInteractive(
         new Phaser.Geom.Rectangle(0, 0, buttonSize, buttonSize),
@@ -852,25 +858,29 @@ export default class GardenScene extends Phaser.Scene {
       addPressEffect(this, hit, bg)
       hit.on('pointerdown', () => this.useGardenTool(tool.id))
 
+      const iconFontSize = Math.round(buttonSize * 0.46)
+      const nameFontSize = Math.max(9, Math.round(buttonSize * 0.22))
       const icon = this.add
-        .text(cx, this.TOOLS_TRAY_Y + 19, tool.icon, { fontSize: '26px' })
+        .text(bx, by + Math.round(buttonSize * 0.28), tool.icon, { fontSize: `${iconFontSize}px` })
         .setOrigin(0.5)
         .setDepth(20)
       const name = this.add
-        .text(cx, this.TOOLS_TRAY_Y + 44, tool.name.split(' ')[0], {
+        .text(bx, by + Math.round(buttonSize * 0.76), tool.name.split(' ')[0], {
           fontFamily: 'Georgia',
-          fontSize: '12px',
+          fontSize: `${nameFontSize}px`,
           color: COLOR.brownMute,
         })
         .setOrigin(0.5)
         .setDepth(20)
 
-      const badge = this.add.circle(x + buttonSize - 8, this.TOOLS_TRAY_Y + 8, 12, COLOR.pink)
+      const badgeR = Math.max(8, Math.round(buttonSize * 0.19))
+      const badge = this.add.circle(x + buttonSize - badgeR + 2, by + badgeR - 2, badgeR, COLOR.pink)
         .setDepth(21)
+      const badgeFontSize = Math.max(8, badgeR - 2)
       const badgeText = this.add
         .text(badge.x, badge.y, `x${this.save.consumables[tool.id] || 0}`, {
           fontFamily: 'Georgia',
-          fontSize: '12px',
+          fontSize: `${badgeFontSize}px`,
           color: COLOR.white,
         })
         .setOrigin(0.5)
@@ -1914,7 +1924,7 @@ export default class GardenScene extends Phaser.Scene {
       if (t.onTap && !this.tutorialMode) hit.on('pointerdown', t.onTap)
 
       const color = t.active ? '#ffffff' : COLOR.inactiveTab
-      this.add.text(cx, cy - 12, t.emoji, { fontSize: '24px' }).setOrigin(0.5)
+      this.add.text(cx, cy - 12, t.emoji, { fontSize: '24px' }).setOrigin(0.5).setShadow(1, 2, '#000000', 4)
       this.add
         .text(cx, cy + 14, t.label, {
           fontFamily: 'Georgia',
@@ -1922,6 +1932,7 @@ export default class GardenScene extends Phaser.Scene {
           color,
         })
         .setOrigin(0.5)
+        .setShadow(1, 2, '#000000', 4)
       if (t.active) {
         this.add.rectangle(cx, cy + 28, 30, 2, 0xffffff)
       }

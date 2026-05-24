@@ -860,7 +860,7 @@ export default class OrderScene extends Phaser.Scene {
       if (tab.onTap) hit.on('pointerdown', tab.onTap)
 
       const color = tab.active ? '#ffffff' : COLOR.inactiveTab
-      this.add.text(cx, cy - 12, tab.emoji, { fontSize: '24px' }).setOrigin(0.5)
+      this.add.text(cx, cy - 12, tab.emoji, { fontSize: '24px' }).setOrigin(0.5).setShadow(1, 2, '#000000', 4)
       this.add
         .text(cx, cy + 14, tab.label, {
           fontFamily: 'Georgia',
@@ -868,6 +868,7 @@ export default class OrderScene extends Phaser.Scene {
           color,
         })
         .setOrigin(0.5)
+        .setShadow(1, 2, '#000000', 4)
       if (tab.active) {
         this.add.rectangle(cx, cy + 28, 30, 2, 0xffffff)
       }
