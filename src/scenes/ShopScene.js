@@ -1579,6 +1579,34 @@ export default class ShopScene extends Phaser.Scene {
     })
   }
 
+  playTipFloater(tip) {
+    const fulfillBtn = this.sessionFulfillBtn
+    if (!fulfillBtn) return
+    const bx = fulfillBtn.text.x
+    const by = fulfillBtn.text.y - 20
+
+    const floater = this.add
+      .text(bx, by, `+${tip} 🪙`, {
+        fontFamily: 'Georgia',
+        fontSize: '23px',
+        color: '#f0c040',
+      })
+      .setOrigin(0.5)
+      .setDepth(101)
+      .setShadow(1, 1, '#000000', 4)
+
+    this.tweens.add({
+      targets: floater,
+      y: by - 75,
+      alpha: { from: 1, to: 0 },
+      scaleX: { from: 1.25, to: 0.9 },
+      scaleY: { from: 1.25, to: 0.9 },
+      duration: 1300,
+      ease: 'Cubic.easeOut',
+      onComplete: () => floater.destroy(),
+    })
+  }
+
   handleFulfill() {
     if (this.isResolving) return
     if (!this.hasEnoughStock()) {
@@ -1591,6 +1619,10 @@ export default class ShopScene extends Phaser.Scene {
 
     this.isResolving = true
     this.playFulfillSuccessEffects()
+    // Capture patience before stopTimer() nulls the timer state
+    const patiencePct = (this.timerBarW > 0 && this.timerValue)
+      ? this.timerValue.width / this.timerBarW
+      : 0
     this.stopTimer()
     let reward = this.calculateReward()
     if (this.salesRushRemaining > 0) {
@@ -1607,9 +1639,10 @@ export default class ShopScene extends Phaser.Scene {
     this.customersServed += 1
 
     let tip = 0
-    const tipChance = this.luckyDayActive ? 1 : this.currentCustomer.tipChance
-    if (Math.random() < tipChance) {
-      tip = 10
+    const effectivePatiencePct = this.luckyDayActive ? 1 : patiencePct
+    if (effectivePatiencePct > 0.6) {
+      const scaledPct = (effectivePatiencePct - 0.6) / 0.4
+      tip = Math.round(Math.max(3, Math.min(30, reward * 0.2 * scaledPct)))
       this.save.coins += tip
       this.sessionCoins += tip
     }
@@ -1634,9 +1667,10 @@ export default class ShopScene extends Phaser.Scene {
     if (tip > 0) track(this.save, 'get_tip', 1)
     if (this.goalsButton) this.goalsButton.refreshBadge()
 
+    if (tip > 0) this.playTipFloater(tip)
     const lines = [{ text: `✿ +${reward} coins!`, color: '#2d6e2d' }]
     if (tip > 0) {
-      lines.push({ text: '+10 tip! 🌸', color: '#8b3a7a' })
+      lines.push({ text: `+${tip} tip! 🌸`, color: '#8b3a7a' })
     }
     this.flashMessage(lines, () => {
       this.customerIndex += 1

@@ -159,6 +159,7 @@ export default class GardenScene extends Phaser.Scene {
     this.plotPositions = []
     this.plotVisuals = Array.from({ length: this.plotCount }, () => [])
     this.plotState = Array.from({ length: this.plotCount }, () => null)
+    this.wateringCanPositions = {}
 
     this.inventoryObjects = []
     this.toolsObjects = []
@@ -399,6 +400,7 @@ export default class GardenScene extends Phaser.Scene {
     }
     this.plotVisuals[idx] = []
     this.plotState[idx] = null
+    delete this.wateringCanPositions[idx]
 
     const layout = this.plotLayout[idx]
     if (!layout) return
@@ -419,7 +421,7 @@ export default class GardenScene extends Phaser.Scene {
     const remainingMs = (plant.plantedAt + growTimeMs) - Date.now()
 
     if (remainingMs > 0) {
-      const timer = this.drawGrowingPlot(idx, cx, cy, flower, remainingMs)
+      const timer = this.drawGrowingPlot(idx, cx, cy, flower, remainingMs, !!plant.watered)
       this.plotState[idx] = { kind: 'growing', timer }
       return
     }
@@ -463,7 +465,7 @@ export default class GardenScene extends Phaser.Scene {
     this.plotVisuals[idx].push(card, highlight, plus)
   }
 
-  drawGrowingPlot(idx, cx, cy, flower, remaining) {
+  drawGrowingPlot(idx, cx, cy, flower, remaining, watered) {
     const half = PLOT_SIZE / 2
 
     const card = this.add.graphics()
@@ -503,6 +505,37 @@ export default class GardenScene extends Phaser.Scene {
 
     ;[card, pot, name, timer].forEach((o) => this.applyGardenPlotMask(o))
     this.plotVisuals[idx].push(card, pot, name, timer)
+
+    if (!watered) {
+      const wcx = cx + 46
+      const wcy = cy + 46
+      const wcRadius = 19
+      // Draw circle at local (0,0) so scale tweens animate around the circle center
+      const wcBg = this.add.graphics({ x: wcx, y: wcy }).setDepth(10)
+      wcBg.fillStyle(0x3ba8d8, 1)
+      wcBg.fillCircle(0, 0, wcRadius)
+      wcBg.lineStyle(3, 0xffffff, 0.9)
+      wcBg.strokeCircle(0, 0, wcRadius)
+      const wcIcon = this.add
+        .text(wcx, wcy - 1, '💧', { fontFamily: 'Arial, sans-serif', fontSize: '19px' })
+        .setOrigin(0.5)
+        .setDepth(11)
+      // Gentle pulse so the button catches the eye
+      this.tweens.add({
+        targets: [wcBg, wcIcon],
+        scaleX: { from: 1, to: 1.18 },
+        scaleY: { from: 1, to: 1.18 },
+        duration: 700,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut',
+      })
+      this.applyGardenPlotMask(wcBg)
+      this.applyGardenPlotMask(wcIcon)
+      this.plotVisuals[idx].push(wcBg, wcIcon)
+      this.wateringCanPositions[idx] = { cx: wcx, cy: wcy, radius: wcRadius + 8 }
+    }
+
     return timer
   }
 
@@ -684,6 +717,16 @@ export default class GardenScene extends Phaser.Scene {
       const gameX = pointer.x
       const gameY = pointer.y
       const halfSize = this.plotSize / 2
+
+      for (const idxStr of Object.keys(this.wateringCanPositions)) {
+        const wc = this.wateringCanPositions[idxStr]
+        const dx = gameX - wc.cx
+        const dy = gameY - wc.cy
+        if (dx * dx + dy * dy <= wc.radius * wc.radius) {
+          this.waterPlot(parseInt(idxStr, 10))
+          return
+        }
+      }
 
       for (const plot of this.plotPositions) {
         if (
@@ -1564,6 +1607,83 @@ export default class GardenScene extends Phaser.Scene {
       saveManager.save(this.save)
       this.scene.start('TutorialScene', { save: this.save, step: 5 })
     }
+  }
+
+  waterPlot(idx) {
+    const plant = this.save.garden.find((p) => p.plotIndex === idx)
+    if (!plant || plant.watered) return
+    const flower = getFlowerById(plant.flowerId)
+    if (!flower) return
+    const growTimeMs = getEffectiveGrowTimeMs(flower)
+    plant.plantedAt -= growTimeMs * 0.28
+    plant.watered = true
+    saveManager.save(this.save)
+    this.playWateringEffect(idx)
+    this.renderPlot(idx)
+  }
+
+  playWateringEffect(idx) {
+    const layout = this.plotLayout[idx]
+    if (!layout) return
+    const cx = layout.cx
+    const cy = layout.naturalCy + this.gardenScrollY
+    const depth = 90
+
+    // Expanding blue ring
+    const ring = this.add
+      .circle(cx, cy, 18, 0x3ba8d8, 0)
+      .setStrokeStyle(4, 0x3ba8d8, 0.9)
+      .setDepth(depth)
+    this.tweens.add({
+      targets: ring,
+      scaleX: { from: 0.3, to: 3.8 },
+      scaleY: { from: 0.3, to: 3.8 },
+      alpha: { from: 0.9, to: 0 },
+      duration: 550,
+      ease: 'Cubic.easeOut',
+      onComplete: () => ring.destroy(),
+    })
+
+    // Water droplets raining down
+    for (let i = 0; i < 9; i++) {
+      this.time.delayedCall(i * 40, () => {
+        const sx = cx + Phaser.Math.Between(-30, 30)
+        const sy = cy - Phaser.Math.Between(25, 45)
+        const drop = this.add
+          .circle(sx, sy, Phaser.Math.Between(2, 4), 0x3ba8d8, 0.9)
+          .setDepth(depth + 1)
+        this.tweens.add({
+          targets: drop,
+          y: sy + Phaser.Math.Between(35, 60),
+          x: sx + Phaser.Math.Between(-6, 6),
+          alpha: { from: 0.9, to: 0 },
+          scaleX: { from: 1, to: 0.3 },
+          scaleY: { from: 1.4, to: 0.3 },
+          duration: Phaser.Math.Between(380, 620),
+          ease: 'Quad.easeIn',
+          onComplete: () => drop.destroy(),
+        })
+      })
+    }
+
+    // Floating "+28%" speed-up label
+    const label = this.add
+      .text(cx, cy - 36, '+28% ⚡', {
+        fontFamily: 'Georgia',
+        fontSize: '14px',
+        color: '#3ba8d8',
+      })
+      .setOrigin(0.5)
+      .setDepth(depth + 2)
+      .setShadow(1, 1, '#000000', 3)
+    this.tweens.add({
+      targets: label,
+      y: cy - 68,
+      alpha: { from: 1, to: 0 },
+      duration: 1100,
+      ease: 'Cubic.easeOut',
+      onComplete: () => label.destroy(),
+    })
   }
 
   // ---------- Inventory panel (fixed at bottom) ----------
