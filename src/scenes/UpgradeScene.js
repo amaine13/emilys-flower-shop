@@ -10,6 +10,8 @@ import { createRoundedFillCentered } from '../ui/roundedUi.js'
 import { addPressEffect } from '../ui/buttonEffects.js'
 import { Scrollbar } from '../ui/scrollbar.js'
 import { addCoinText, COIN_EMOJI } from '../ui/coinLabel.js'
+import { fadeToScene, fadeInScene } from '../ui/sceneTransition.js'
+import { animateCoinHud } from '../ui/animateCoinHud.js'
 
 const HUD_H = 80
 const NAV_H = 70
@@ -151,6 +153,7 @@ export default class UpgradeScene extends Phaser.Scene {
   }
 
   create() {
+    fadeInScene(this)
     this.scale.on('resize', () => {
       this.input.setDefaultCursor('default')
       if (!this._resizeScheduled) {
@@ -328,6 +331,7 @@ export default class UpgradeScene extends Phaser.Scene {
       .text(64, row1Y, `${this.save.coins}`, hudRow1TextStyle())
       .setOrigin(0, 0.5)
       .setShadow(1, 1, '#000000', 2)
+    this._coinTarget = this.save.coins
     this.hudDay = this.add
       .text(cx, row1Y, `Day ${this.save.day}`, hudRow1TextStyle())
       .setOrigin(0.5)
@@ -374,7 +378,12 @@ export default class UpgradeScene extends Phaser.Scene {
   }
 
   refreshHud() {
-    this.hudCoins.setText(`${this.save.coins}`)
+    const newCoins = this.save.coins
+    const oldCoins = this._coinTarget ?? newCoins
+    this._coinTarget = newCoins
+    if (oldCoins !== newCoins) {
+      animateCoinHud(this, oldCoins, newCoins)
+    }
     this.hudDay.setText(`Day ${this.save.day}`)
     this.hudStarsLabel.setText(formatHudStarsLine(this.save))
     const cx = this.scale.width / 2
@@ -963,19 +972,19 @@ export default class UpgradeScene extends Phaser.Scene {
         emoji: '🌱',
         label: 'Garden',
         active: false,
-        onTap: () => this.scene.start('GardenScene', { save: this.save }),
+        onTap: () => fadeToScene(this, 'GardenScene', { save: this.save }),
       },
       {
         emoji: '🏪',
         label: 'Shop',
         active: false,
-        onTap: () => this.scene.start('ShopScene', { save: this.save }),
+        onTap: () => fadeToScene(this, 'ShopScene', { save: this.save }),
       },
       {
         emoji: '📋',
         label: 'Orders',
         active: false,
-        onTap: () => this.scene.start('OrderScene', { save: this.save }),
+        onTap: () => fadeToScene(this, 'OrderScene', { save: this.save }),
       },
       { emoji: '⭐', label: 'Upgrades', active: true },
     ]

@@ -12,6 +12,8 @@ import { playSfx, playBgMusic, attachMuteButton } from '../audioManager.js'
 import { createRoundedFillCentered } from '../ui/roundedUi.js'
 import { addPressEffect } from '../ui/buttonEffects.js'
 import { addCoinText, measureCoinText, COIN_EMOJI } from '../ui/coinLabel.js'
+import { fadeToScene, fadeInScene } from '../ui/sceneTransition.js'
+import { animateCoinHud } from '../ui/animateCoinHud.js'
 
 const HUD_H = 80
 const NAV_H = 70
@@ -195,6 +197,7 @@ export default class ShopScene extends Phaser.Scene {
   }
 
   create() {
+    fadeInScene(this)
     this.scale.on('resize', () => {
       this.input.setDefaultCursor('default')
       if (this.tutorialMode) return
@@ -432,7 +435,7 @@ export default class ShopScene extends Phaser.Scene {
       })
       .setOrigin(0.5)
     backBg.on('pointerdown', () => {
-      this.scene.start('GardenScene', { save: this.save })
+      fadeToScene(this, 'GardenScene', { save: this.save })
     })
     this.screenObjects.push(backBg, backLabel)
   }
@@ -661,7 +664,7 @@ export default class ShopScene extends Phaser.Scene {
     this.save.shopSession = null
     this.save.tutorialStep = 4
     saveManager.save(this.save)
-    this.scene.start('TutorialScene', { save: this.save, step: 4 })
+    fadeToScene(this, 'TutorialScene', { save: this.save, step: 4 })
   }
 
   // Build the in-session UI; safe to call for both new and resumed sessions.
@@ -701,6 +704,7 @@ export default class ShopScene extends Phaser.Scene {
     this.hudCoins = this.add
       .text(64, row1Y, `${this.save.coins}`, hudRow1TextStyle())
       .setOrigin(0, 0.5)
+    this._coinTarget = this.save.coins
     this.hudDay = this.add
       .text(cx, row1Y, `Day ${this.save.day}`, hudRow1TextStyle())
       .setOrigin(0.5)
@@ -745,7 +749,12 @@ export default class ShopScene extends Phaser.Scene {
   }
 
   refreshHud() {
-    this.hudCoins.setText(`${this.save.coins}`)
+    const newCoins = this.save.coins
+    const oldCoins = this._coinTarget ?? newCoins
+    this._coinTarget = newCoins
+    if (oldCoins !== newCoins) {
+      animateCoinHud(this, oldCoins, newCoins)
+    }
     this.hudDay.setText(`Day ${this.save.day}`)
     this.hudStarsLabel.setText(formatHudStarsLine(this.save))
     const cx = this.scale.width / 2
@@ -1049,10 +1058,23 @@ export default class ShopScene extends Phaser.Scene {
       rowProbe.destroy()
 
       const rowCenterY = cy + rowH / 2
-      const img = this.add.image(innerLeft + 12, rowCenterY, flower.sprite)
+      const imgX = innerLeft + 12
+      const iconHalf = 12
+
+      const iconShadow = this.add.graphics()
+      iconShadow.fillStyle(0x000000, 0.18)
+      iconShadow.fillRoundedRect(imgX - iconHalf + 1.5, rowCenterY - iconHalf + 2, iconHalf * 2, iconHalf * 2, 5)
+      this.sessionObjects.push(iconShadow)
+
+      const img = this.add.image(imgX, rowCenterY, flower.sprite)
       fitImage(img, 24, 24)
       img.setOrigin(0.5)
       this.sessionObjects.push(img)
+
+      const iconBorder = this.add.graphics()
+      iconBorder.lineStyle(1.5, 0xc8a882, 0.75)
+      iconBorder.strokeRoundedRect(imgX - iconHalf, rowCenterY - iconHalf, iconHalf * 2, iconHalf * 2, 5)
+      this.sessionObjects.push(iconBorder)
 
       const rowLabel = this.add
         .text(labelX, rowCenterY, `${flower.name} ×${req.qty}`, {
@@ -1808,7 +1830,8 @@ export default class ShopScene extends Phaser.Scene {
   // Persist the in-progress session so create() can resume it next time, then navigate.
   leaveToScene(sceneKey) {
     this.persistSession()
-    this.scene.start(sceneKey, { save: this.save })
+    this.stopTimer()
+    fadeToScene(this, sceneKey, { save: this.save })
   }
 
   persistSession() {
@@ -1848,7 +1871,7 @@ export default class ShopScene extends Phaser.Scene {
     this.salesRushRemaining = 0
     this.luckyDayActive = false
     saveManager.save(this.save)
-    this.scene.start('EndOfDayScene', {
+    fadeToScene(this, 'EndOfDayScene', {
       save: this.save,
       playedDay,
       customersServed: this.customersServed,

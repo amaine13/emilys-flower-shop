@@ -4,6 +4,7 @@ import { GAME } from '../constants.js'
 import { playBgMusic } from '../audioManager.js'
 import { createRoundedFillCentered } from '../ui/roundedUi.js'
 import { addPressEffect } from '../ui/buttonEffects.js'
+import { fadeToScene, fadeInScene } from '../ui/sceneTransition.js'
 
 // Cozy title screen: plain cream backdrop (placeholder), wooden sign, flower accents, and a Play button.
 export default class TitleScene extends Phaser.Scene {
@@ -12,6 +13,7 @@ export default class TitleScene extends Phaser.Scene {
   }
 
   create() {
+    fadeInScene(this)
     this.scale.on('resize', () => {
       this.input.setDefaultCursor('default')
       if (!this._resizeScheduled) {
@@ -108,9 +110,9 @@ export default class TitleScene extends Phaser.Scene {
       this.input.setDefaultCursor('default')
       playBgMusic(this, save)
       if (!save.tutorialComplete) {
-        this.scene.start('TutorialScene', { save })
+        fadeToScene(this, 'TutorialScene', { save })
       } else {
-        this.scene.start('GardenScene', { save })
+        fadeToScene(this, 'GardenScene', { save })
       }
     })
   }

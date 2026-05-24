@@ -11,6 +11,8 @@ import { createRoundedFillCentered } from '../ui/roundedUi.js'
 import { addPressEffect } from '../ui/buttonEffects.js'
 import { Scrollbar } from '../ui/scrollbar.js'
 import { addCoinText, COIN_EMOJI } from '../ui/coinLabel.js'
+import { fadeToScene, fadeInScene } from '../ui/sceneTransition.js'
+import { animateCoinHud } from '../ui/animateCoinHud.js'
 
 // ---------- fixed layout constants (do not depend on screen height) ----------
 const HUD_H = 80
@@ -125,6 +127,7 @@ export default class GardenScene extends Phaser.Scene {
   }
 
   create() {
+    fadeInScene(this)
     // Derive layout from actual canvas size so the game fills any screen.
     const W = this.scale.width
     const H = this.scale.height
@@ -278,6 +281,7 @@ export default class GardenScene extends Phaser.Scene {
       .text(64, row1Y, `${this.save.coins}`, hudRow1TextStyle())
       .setOrigin(0, 0.5)
       .setShadow(1, 1, '#000000', 2)
+    this._coinTarget = this.save.coins
     this.hudDay = this.add
       .text(cx, row1Y, `Day ${this.save.day}`, hudRow1TextStyle())
       .setOrigin(0.5)
@@ -306,7 +310,12 @@ export default class GardenScene extends Phaser.Scene {
   }
 
   refreshHud() {
-    this.hudCoins.setText(`${this.save.coins}`)
+    const newCoins = this.save.coins
+    const oldCoins = this._coinTarget ?? newCoins
+    this._coinTarget = newCoins
+    if (oldCoins !== newCoins) {
+      animateCoinHud(this, oldCoins, newCoins)
+    }
     this.hudDay.setText(`Day ${this.save.day}`)
     this.hudStarsLabel.setText(formatHudStarsLine(this.save))
     const cx = this.scale.width / 2
@@ -1519,7 +1528,7 @@ export default class GardenScene extends Phaser.Scene {
     if (this.tutorialMode && this.tutorialStep === 1) {
       this.save.tutorialStep = 2
       saveManager.save(this.save)
-      this.scene.start('TutorialScene', { save: this.save, step: 2 })
+      fadeToScene(this, 'TutorialScene', { save: this.save, step: 2 })
     }
   }
 
@@ -1605,7 +1614,7 @@ export default class GardenScene extends Phaser.Scene {
     if (this.tutorialMode && this.tutorialStep === 4) {
       this.save.tutorialStep = 5
       saveManager.save(this.save)
-      this.scene.start('TutorialScene', { save: this.save, step: 5 })
+      fadeToScene(this, 'TutorialScene', { save: this.save, step: 5 })
     }
   }
 
@@ -1875,21 +1884,21 @@ export default class GardenScene extends Phaser.Scene {
         emoji: '🏪',
         label: 'Shop',
         active: false,
-        onTap: () => this.scene.start('ShopScene', { save: this.save }),
+        onTap: () => fadeToScene(this, 'ShopScene', { save: this.save }),
       },
       {
         key: 'orders',
         emoji: '📋',
         label: 'Orders',
         active: false,
-        onTap: () => this.scene.start('OrderScene', { save: this.save }),
+        onTap: () => fadeToScene(this, 'OrderScene', { save: this.save }),
       },
       {
         key: 'upgrades',
         emoji: '⭐',
         label: 'Upgrades',
         active: false,
-        onTap: () => this.scene.start('UpgradeScene', { save: this.save }),
+        onTap: () => fadeToScene(this, 'UpgradeScene', { save: this.save }),
       },
     ]
     const tabW = width / tabs.length

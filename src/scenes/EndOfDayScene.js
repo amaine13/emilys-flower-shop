@@ -6,6 +6,7 @@ import { createRoundedFillCentered } from '../ui/roundedUi.js'
 import { addPressEffect } from '../ui/buttonEffects.js'
 import { checkLevelMilestone, track, generateDailyGoals } from '../missionManager.js'
 import { addCoinText, COIN_EMOJI } from '../ui/coinLabel.js'
+import { fadeToScene, fadeInScene } from '../ui/sceneTransition.js'
 
 const STROKE = 0xe0c8b0
 const PINK = 0xc96b9a
@@ -34,6 +35,7 @@ export default class EndOfDayScene extends Phaser.Scene {
   }
 
   create() {
+    fadeInScene(this)
     this.scale.on('resize', () => {
       this.input.setDefaultCursor('default')
       if (!this._resizeScheduled) {
@@ -314,7 +316,7 @@ export default class EndOfDayScene extends Phaser.Scene {
     addPressEffect(this, hit, button)
     hit.on('pointerdown', () => {
       saveManager.save(this.save)
-      this.scene.start('GardenScene', { save: this.save })
+      fadeToScene(this, 'GardenScene', { save: this.save })
     })
 
     const label = this.add

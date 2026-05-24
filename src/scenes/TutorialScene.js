@@ -3,6 +3,7 @@ import { addPressEffect } from '../ui/buttonEffects.js'
 import * as saveManager from '../saveManager.js'
 import { playBgMusic } from '../audioManager.js'
 import { GAME } from '../constants.js'
+import { fadeToScene, fadeInScene } from '../ui/sceneTransition.js'
 
 // ✏️ EDIT DIALOGUE HERE — no code changes needed, just edit these strings
 export const DIALOGUE = {
@@ -72,6 +73,7 @@ export default class TutorialScene extends Phaser.Scene {
   }
 
   create() {
+    fadeInScene(this)
     this.scale.on('resize', () => {
       this.input.setDefaultCursor('default')
       if (!this._resizeScheduled) {
@@ -354,7 +356,7 @@ export default class TutorialScene extends Phaser.Scene {
       onTap: () => {
         this.save.tutorialStep = 1
         saveManager.save(this.save)
-        this.scene.start('GardenScene', {
+        fadeToScene(this, 'GardenScene', {
           save: this.save,
           tutorialMode: true,
           tutorialStep: 1,
@@ -369,7 +371,7 @@ export default class TutorialScene extends Phaser.Scene {
     const { cx } = this.renderNavWithSpotlight('shop', () => {
       this.save.tutorialStep = 3
       saveManager.save(this.save)
-      this.scene.start('ShopScene', {
+      fadeToScene(this, 'ShopScene', {
         save: this.save,
         tutorialMode: true,
         tutorialStep: 3,
@@ -392,7 +394,7 @@ export default class TutorialScene extends Phaser.Scene {
     const { cx } = this.renderNavWithSpotlight('garden', () => {
       // Garden tutorial back-half: harvest the planted plot.
       saveManager.save(this.save)
-      this.scene.start('GardenScene', {
+      fadeToScene(this, 'GardenScene', {
         save: this.save,
         tutorialMode: true,
         tutorialStep: 4,
@@ -423,7 +425,7 @@ export default class TutorialScene extends Phaser.Scene {
       onTap: () => {
         this.save.tutorialStep = 6
         saveManager.save(this.save)
-        this.scene.start('TutorialScene', { save: this.save, step: 6 })
+        fadeToScene(this, 'TutorialScene', { save: this.save, step: 6 })
       },
     })
   }
@@ -535,7 +537,7 @@ export default class TutorialScene extends Phaser.Scene {
       this.save.tutorialStep = 6
       this.save.day = 1
       saveManager.save(this.save)
-      this.scene.start('GardenScene', { save: this.save })
+      fadeToScene(this, 'GardenScene', { save: this.save })
     })
   }
 }
