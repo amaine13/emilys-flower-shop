@@ -830,7 +830,7 @@ export default class GardenScene extends Phaser.Scene {
     const gridRightX = Math.round((W - gridW) / 2 + gridW)
     const gutterW = W - 8 - gridRightX  // space between grid right edge and scrollbar
     const isMobile = W < 600
-    const buttonSize = isMobile ? 36 : Math.max(40, Math.min(56, gutterW - 4))
+    const buttonSize = isMobile ? 44 : Math.max(44, Math.min(56, gutterW - 4))
     const gap = isMobile ? 6 : 8
     const bx = Math.round(gridRightX + gutterW / 2)
     // Center the stack vertically between the HUD bottom and the inventory tray top
@@ -858,10 +858,10 @@ export default class GardenScene extends Phaser.Scene {
       addPressEffect(this, hit, bg)
       hit.on('pointerdown', () => this.useGardenTool(tool.id))
 
-      const iconFontSize = Math.round(buttonSize * 0.46)
-      const nameFontSize = Math.max(9, Math.round(buttonSize * 0.22))
+      const iconFontSize = Math.round(buttonSize * 0.50)
+      const nameFontSize = Math.max(9, Math.round(buttonSize * 0.20))
       const icon = this.add
-        .text(bx, by + Math.round(buttonSize * 0.28), tool.icon, { fontSize: `${iconFontSize}px` })
+        .text(bx, by + Math.round(buttonSize * 0.34), tool.icon, { fontSize: `${iconFontSize}px` })
         .setOrigin(0.5)
         .setDepth(20)
       const name = this.add
