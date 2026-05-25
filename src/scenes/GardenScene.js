@@ -654,10 +654,13 @@ export default class GardenScene extends Phaser.Scene {
     card.lineStyle(3, COLOR.gold, 1)
     card.strokeRoundedRect(cx - half, cy - half, PLOT_SIZE, PLOT_SIZE, PLOT_RADIUS)
 
-    const sprite = this.add.image(cx, cy - 8, flower.sprite).setScale(1.4)
+    const sprite = this.add.image(cx, cy - 8, flower.sprite)
+    fitImage(sprite, 52, 52)
+    const baseScale = sprite.scaleX
     this.tweens.add({
       targets: sprite,
-      scale: 1.54,
+      scaleX: baseScale * 1.1,
+      scaleY: baseScale * 1.1,
       duration: 450,
       yoyo: true,
       repeat: -1,
