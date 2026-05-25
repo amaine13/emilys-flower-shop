@@ -81,13 +81,14 @@ function fitImage(img, w, h) {
 function hudRow1TextStyle() {
   return {
     fontFamily: 'Georgia',
-    fontSize: '17px',
+    fontSize: '18px',
+    fontStyle: 'bold',
     color: '#ffffff',
     shadow: {
-      offsetX: 1,
-      offsetY: 1,
+      offsetX: 0,
+      offsetY: 2,
       color: COLOR.hudShadow,
-      blur: 0,
+      blur: 4,
       fill: true,
     },
   }
@@ -99,10 +100,10 @@ function hudRow2TextStyle() {
     fontSize: '16px',
     color: '#ffffff',
     shadow: {
-      offsetX: 1,
-      offsetY: 1,
+      offsetX: 0,
+      offsetY: 2,
       color: COLOR.hudShadow,
-      blur: 0,
+      blur: 4,
       fill: true,
     },
   }
@@ -335,6 +336,7 @@ export default class GardenScene extends Phaser.Scene {
     this.add
       .text(cx, HUD_H + 12, 'My Garden', {
         fontFamily: 'Georgia',
+        fontStyle: 'bold',
         fontSize: '22px',
         color: COLOR.brown,
       })
@@ -429,8 +431,8 @@ export default class GardenScene extends Phaser.Scene {
     const remainingMs = (plant.plantedAt + growTimeMs) - Date.now()
 
     if (remainingMs > 0) {
-      const timer = this.drawGrowingPlot(idx, cx, cy, flower, remainingMs, !!plant.watered)
-      this.plotState[idx] = { kind: 'growing', timer }
+      const { timer, stage } = this.drawGrowingPlot(idx, cx, cy, flower, remainingMs, !!plant.watered)
+      this.plotState[idx] = { kind: 'growing', timer, stage }
       return
     }
 
@@ -475,6 +477,9 @@ export default class GardenScene extends Phaser.Scene {
 
   drawGrowingPlot(idx, cx, cy, flower, remaining, watered) {
     const half = PLOT_SIZE / 2
+    const growTimeMs = getEffectiveGrowTimeMs(flower)
+    const progress = Math.max(0, Math.min(1, 1 - remaining / growTimeMs))
+    const stage = progress < 0.4 ? 'soil' : 'sprout'
 
     const card = this.add.graphics()
     card.fillStyle(COLOR.dirtGrowing, 1)
@@ -482,11 +487,15 @@ export default class GardenScene extends Phaser.Scene {
     card.lineStyle(3, COLOR.dirtBorder, 1)
     card.strokeRoundedRect(cx - half, cy - half, PLOT_SIZE, PLOT_SIZE, PLOT_RADIUS)
 
-    const pot = this.add.image(cx, cy - 12, 'flower-pot-red').setScale(1.1)
-    // Pot gently bobs up and down while growing
+    // 🌱 emoji already has soil + sprout built in — just render it small or full size
+    const sproutSize = stage === 'soil' ? '22px' : '40px'
+    const sproutY = cy - 10
+    const mainVisual = this.add
+      .text(cx, sproutY, '🌱', { fontFamily: 'Arial, sans-serif', fontSize: sproutSize })
+      .setOrigin(0.5)
     this.tweens.add({
-      targets: pot,
-      y: { from: cy - 12, to: cy - 18 },
+      targets: mainVisual,
+      y: { from: sproutY, to: sproutY - 6 },
       duration: 900,
       yoyo: true,
       repeat: -1,
@@ -496,23 +505,26 @@ export default class GardenScene extends Phaser.Scene {
     const name = this.add
       .text(cx, cy + 28, flower.name, {
         fontFamily: 'Georgia',
-        fontSize: '13px',
+        fontStyle: 'bold',
+        fontSize: '14px',
         color: '#ffffff',
+        stroke: '#2a1200',
+        strokeThickness: 3,
       })
       .setOrigin(0.5)
-      .setShadow(1, 1, '#000000', 3)
 
     const timer = this.add
-      .text(cx, cy + 42, formatGrowTime(remaining), {
+      .text(cx, cy + 43, formatGrowTime(remaining), {
         fontFamily: 'Georgia',
-        fontSize: '12px',
-        color: '#f0e8d8',
+        fontSize: '13px',
+        color: '#ffffff',
+        stroke: '#2a1200',
+        strokeThickness: 3,
       })
       .setOrigin(0.5)
-      .setShadow(1, 1, '#000000', 3)
 
-    ;[card, pot, name, timer].forEach((o) => this.applyGardenPlotMask(o))
-    this.plotVisuals[idx].push(card, pot, name, timer)
+    ;[card, mainVisual, name, timer].forEach((o) => this.applyGardenPlotMask(o))
+    this.plotVisuals[idx].push(card, mainVisual, name, timer)
 
     if (!watered) {
       const wcx = cx + 46
@@ -544,7 +556,7 @@ export default class GardenScene extends Phaser.Scene {
       this.wateringCanPositions[idx] = { cx: wcx, cy: wcy, radius: wcRadius + 8 }
     }
 
-    return timer
+    return { timer, stage }
   }
 
   tickGrowEffects() {
@@ -670,12 +682,13 @@ export default class GardenScene extends Phaser.Scene {
     const ready = this.add
       .text(cx, cy + 46, '✿ Ready!', {
         fontFamily: 'Georgia',
-        fontSize: '13px',
+        fontStyle: 'bold',
+        fontSize: '14px',
         color: '#ffffff',
+        stroke: '#2a1200',
+        strokeThickness: 3,
       })
       .setOrigin(0.5)
-      .setShadow(1, 1, '#000000', 3)
-      .setShadow(2, 2, '#000000', 6)
 
     ;[glow, card, sprite, ready].forEach((o) => this.applyGardenPlotMask(o))
     this.plotVisuals[idx].push(glow, card, sprite, ready)
@@ -809,7 +822,13 @@ export default class GardenScene extends Phaser.Scene {
       if (now >= plant.plantedAt + growTimeMs) {
         this.renderPlot(i)
       } else {
-        if (s.timer) s.timer.setText(formatGrowTime(remainingMs))
+        const progress = Math.max(0, 1 - remainingMs / growTimeMs)
+        const newStage = progress < 0.4 ? 'soil' : 'sprout'
+        if (newStage !== s.stage) {
+          this.renderPlot(i)
+        } else if (s.timer) {
+          s.timer.setText(formatGrowTime(remainingMs))
+        }
       }
     }
   }
@@ -1746,6 +1765,7 @@ export default class GardenScene extends Phaser.Scene {
     const label = this.add
       .text(16, top + 8, 'My Inventory', {
         fontFamily: 'Georgia',
+        fontStyle: 'bold',
         fontSize: '15px',
         color: COLOR.brown,
       })
