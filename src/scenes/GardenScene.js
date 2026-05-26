@@ -505,11 +505,8 @@ export default class GardenScene extends Phaser.Scene {
     const name = this.add
       .text(cx, cy + 28, flower.name, {
         fontFamily: 'Georgia',
-        fontStyle: 'bold',
-        fontSize: '14px',
-        color: '#ffffff',
-        stroke: '#2a1200',
-        strokeThickness: 3,
+        fontSize: '13px',
+        color: '#000000',
       })
       .setOrigin(0.5)
 
@@ -517,9 +514,7 @@ export default class GardenScene extends Phaser.Scene {
       .text(cx, cy + 43, formatGrowTime(remaining), {
         fontFamily: 'Georgia',
         fontSize: '13px',
-        color: '#ffffff',
-        stroke: '#2a1200',
-        strokeThickness: 3,
+        color: '#000000',
       })
       .setOrigin(0.5)
 
@@ -682,11 +677,8 @@ export default class GardenScene extends Phaser.Scene {
     const ready = this.add
       .text(cx, cy + 46, '✿ Ready!', {
         fontFamily: 'Georgia',
-        fontStyle: 'bold',
-        fontSize: '14px',
-        color: '#ffffff',
-        stroke: '#2a1200',
-        strokeThickness: 3,
+        fontSize: '13px',
+        color: '#000000',
       })
       .setOrigin(0.5)
 
